@@ -209,6 +209,7 @@ $cuba-sidemenu-top-height: $v-unit-size + 2 * $cuba-sidemenu-top-offset;
 
     .#{$primary-stylename}-item-caption {
       width: 100%;
+      max-width: initial;
     }
 
     .#{$primary-stylename}-item-badge {
