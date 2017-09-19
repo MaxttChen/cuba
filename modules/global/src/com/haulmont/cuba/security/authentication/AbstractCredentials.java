@@ -23,6 +23,14 @@ public abstract class AbstractCredentials implements Credentials {
     private Locale locale;
     private Map<String, Object> params;
 
+    public AbstractCredentials(Locale locale, Map<String, Object> params) {
+        this.locale = locale;
+        this.params = params;
+    }
+
+    public AbstractCredentials() {
+    }
+
     public Locale getLocale() {
         return locale;
     }

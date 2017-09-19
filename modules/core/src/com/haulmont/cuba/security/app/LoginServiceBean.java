@@ -18,6 +18,7 @@ package com.haulmont.cuba.security.app;
 
 import com.haulmont.cuba.core.global.UserSessionSource;
 import com.haulmont.cuba.security.authentication.Credentials;
+import com.haulmont.cuba.security.authentication.UserDetails;
 import com.haulmont.cuba.security.entity.SessionAction;
 import com.haulmont.cuba.security.entity.User;
 import com.haulmont.cuba.security.global.LoginException;
@@ -56,15 +57,8 @@ public class LoginServiceBean implements LoginService {
 
     @Override
     public UserSession login(Credentials credentials) throws LoginException {
-        throw new NotImplementedException(""); // todo
-    }
-
-    @Override
-    public UserSession login(String login, String password, Locale locale) throws LoginException {
         try {
-            UserSession session = loginWorker.login(login, password, locale);
-            userSessionLog.createSessionLogRecord(session, SessionAction.LOGIN, Collections.emptyMap());
-            return session;
+            return loginWorker.login(credentials);
         } catch (LoginException e) {
             log.info("Login failed: {}", e.toString());
             throw e;
@@ -72,6 +66,24 @@ public class LoginServiceBean implements LoginService {
             log.error("Login error", e);
             throw wrapInLoginException(e);
         }
+    }
+
+    @Override
+    public UserDetails authenticate(Credentials credentials) throws LoginException {
+        try {
+            return loginWorker.authenticate(credentials);
+        } catch (LoginException e) {
+            log.info("Login failed: {}", e.toString());
+            throw e;
+        } catch (Throwable e) {
+            log.error("Login error", e);
+            throw wrapInLoginException(e);
+        }
+    }
+
+    @Override
+    public UserSession login(String login, String password, Locale locale) throws LoginException {
+        return login(login, password, locale, Collections.emptyMap());
     }
 
     @Override
@@ -91,17 +103,7 @@ public class LoginServiceBean implements LoginService {
 
     @Override
     public UserSession loginTrusted(String login, String password, Locale locale) throws LoginException {
-        try {
-            UserSession session = loginWorker.loginTrusted(login, password, locale);
-            userSessionLog.createSessionLogRecord(session, SessionAction.LOGIN, Collections.emptyMap());
-            return session;
-        } catch (LoginException e) {
-            log.info("Login failed: {}", e.toString());
-            throw e;
-        } catch (Throwable e) {
-            log.error("Login error", e);
-            throw wrapInLoginException(e);
-        }
+        return loginTrusted(login, password, locale, Collections.emptyMap());
     }
 
     @Override
@@ -121,17 +123,7 @@ public class LoginServiceBean implements LoginService {
 
     @Override
     public UserSession loginByRememberMe(String login, String rememberMeToken, Locale locale) throws LoginException {
-        try {
-            UserSession session = loginWorker.loginByRememberMe(login, rememberMeToken, locale);
-            userSessionLog.createSessionLogRecord(session, SessionAction.LOGIN, Collections.emptyMap());
-            return session;
-        } catch (LoginException e) {
-            log.info("Login failed: {}", e.toString());
-            throw e;
-        } catch (Throwable e) {
-            log.error("Login error", e);
-            throw wrapInLoginException(e);
-        }
+        return loginByRememberMe(login, rememberMeToken, locale, Collections.emptyMap());
     }
 
     @Override
@@ -205,7 +197,7 @@ public class LoginServiceBean implements LoginService {
 
     @Override
     public boolean checkRememberMe(String login, String rememberMeToken) {
-        return loginWorker.checkRememberMe(login, rememberMeToken);
+        return false;
     }
 
     protected LoginException wrapInLoginException(Throwable throwable) {

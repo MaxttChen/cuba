@@ -16,8 +16,30 @@
 
 package com.haulmont.cuba.security.authentication;
 
+import java.util.Collections;
+import java.util.Locale;
+import java.util.Map;
+
 public class RememberMeCredentials extends AbstractCredentials {
+    private String login;
     private String rememberMeToken;
+
+    public RememberMeCredentials() {
+    }
+
+    public RememberMeCredentials(String login, String rememberMeToken) {
+        this(login, rememberMeToken, null);
+    }
+
+    public RememberMeCredentials(String login, String rememberMeToken, Locale locale) {
+        this(login, rememberMeToken, locale, Collections.emptyMap());
+    }
+
+    public RememberMeCredentials(String login, String rememberMeToken, Locale locale, Map<String, Object> params) {
+        super(locale, params);
+        this.login = login;
+        this.rememberMeToken = rememberMeToken;
+    }
 
     public String getRememberMeToken() {
         return rememberMeToken;
@@ -25,5 +47,13 @@ public class RememberMeCredentials extends AbstractCredentials {
 
     public void setRememberMeToken(String rememberMeToken) {
         this.rememberMeToken = rememberMeToken;
+    }
+
+    public String getLogin() {
+        return login;
+    }
+
+    public void setLogin(String login) {
+        this.login = login;
     }
 }

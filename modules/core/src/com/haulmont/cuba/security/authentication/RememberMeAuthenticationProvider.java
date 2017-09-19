@@ -16,22 +16,25 @@
 
 package com.haulmont.cuba.security.authentication;
 
-public class TrustedPasswordCredentials extends AbstractCredentials {
+import com.haulmont.cuba.core.Persistence;
+import com.haulmont.cuba.security.global.LoginException;
 
-    private String trustedClientPassword;
+import javax.inject.Inject;
 
-    public TrustedPasswordCredentials() {
+public class RememberMeAuthenticationProvider extends AbstractAuthenticationProvider {
+
+    @Inject
+    public RememberMeAuthenticationProvider(Persistence persistence) {
+        super(persistence);
     }
 
-    public TrustedPasswordCredentials(String trustedClientPassword) {
-        this.trustedClientPassword = trustedClientPassword;
+    @Override
+    public UserDetails authenticate(Credentials credentials) throws LoginException {
+        return null;
     }
 
-    public String getTrustedClientPassword() {
-        return trustedClientPassword;
-    }
-
-    public void setTrustedClientPassword(String trustedClientPassword) {
-        this.trustedClientPassword = trustedClientPassword;
+    @Override
+    public boolean supports(Class<?> credentialsClass) {
+        return false;
     }
 }

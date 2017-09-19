@@ -16,22 +16,11 @@
 
 package com.haulmont.cuba.security.authentication;
 
-public class TrustedPasswordCredentials extends AbstractCredentials {
+import com.haulmont.cuba.security.entity.User;
 
-    private String trustedClientPassword;
+import java.io.Serializable;
 
-    public TrustedPasswordCredentials() {
-    }
-
-    public TrustedPasswordCredentials(String trustedClientPassword) {
-        this.trustedClientPassword = trustedClientPassword;
-    }
-
-    public String getTrustedClientPassword() {
-        return trustedClientPassword;
-    }
-
-    public void setTrustedClientPassword(String trustedClientPassword) {
-        this.trustedClientPassword = trustedClientPassword;
-    }
+// todo JavaDoc
+public interface UserDetails extends Serializable {
+    User getUser();
 }

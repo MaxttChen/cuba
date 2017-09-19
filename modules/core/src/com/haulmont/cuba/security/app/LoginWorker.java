@@ -16,6 +16,8 @@
  */
 package com.haulmont.cuba.security.app;
 
+import com.haulmont.cuba.security.authentication.Credentials;
+import com.haulmont.cuba.security.authentication.UserDetails;
 import com.haulmont.cuba.security.entity.User;
 import com.haulmont.cuba.security.global.LoginException;
 import com.haulmont.cuba.security.global.UserSession;
@@ -33,41 +35,22 @@ public interface LoginWorker {
     String NAME = "cuba_LoginWorker";
 
     /**
-     * @see LoginService#login(String, String, java.util.Locale)
+     * todo JavaDoc!
+     *
+     * @param credentials
+     * @return
+     * @throws LoginException
      */
-    UserSession login(String login, String password, Locale locale) throws LoginException;
+    UserSession login(Credentials credentials) throws LoginException;
 
     /**
-     * @see LoginService#login(String, String, java.util.Locale, java.util.Map)
+     * todo JavaDoc!
+     *
+     * @param credentials
+     * @return
+     * @throws LoginException
      */
-    UserSession login(String login, String password, Locale locale, Map<String, Object> params) throws LoginException;
-
-    /**
-     * @see LoginService#getSystemSession(String)
-     */
-    UserSession getSystemSession(String trustedClientPassword) throws LoginException;
-
-    /**
-     * @see LoginService#loginTrusted(String, String, java.util.Locale)
-     */
-    UserSession loginTrusted(String login, String password, Locale locale) throws LoginException;
-
-    /**
-     * @see LoginService#loginTrusted(String, String, java.util.Locale, java.util.Map)
-     */
-    UserSession loginTrusted(String login, String password, Locale locale, Map<String, Object> params)
-            throws LoginException;
-
-    /**
-     * @see LoginService#loginByRememberMe(String, String, java.util.Locale)
-     */
-    UserSession loginByRememberMe(String login, String rememberMeToken, Locale locale) throws LoginException;
-
-    /**
-     * @see LoginService#loginTrusted(String, String, java.util.Locale, java.util.Map)
-     */
-    UserSession loginByRememberMe(String login, String rememberMeToken, Locale locale, Map<String, Object> params)
-            throws LoginException;
+    UserDetails authenticate(Credentials credentials) throws LoginException;
 
     /**
      * @see LoginService#logout()
@@ -102,9 +85,56 @@ public interface LoginWorker {
      */
     UserSession loginAnonymous() throws LoginException;
 
+    // TODO DEPRECATE METHODS BELOW
+
+    /**
+     * @see LoginService#login(String, String, java.util.Locale)
+     */
+    @Deprecated
+    UserSession login(String login, String password, Locale locale) throws LoginException;
+
+    /**
+     * @see LoginService#login(String, String, java.util.Locale, java.util.Map)
+     */
+    @Deprecated
+    UserSession login(String login, String password, Locale locale, Map<String, Object> params) throws LoginException;
+
+    /**
+     * @see LoginService#getSystemSession(String)
+     */
+    @Deprecated
+    UserSession getSystemSession(String trustedClientPassword) throws LoginException;
+
+    /**
+     * @see LoginService#loginTrusted(String, String, java.util.Locale)
+     */
+    @Deprecated
+    UserSession loginTrusted(String login, String password, Locale locale) throws LoginException;
+
+    /**
+     * @see LoginService#loginTrusted(String, String, java.util.Locale, java.util.Map)
+     */
+    @Deprecated
+    UserSession loginTrusted(String login, String password, Locale locale, Map<String, Object> params)
+            throws LoginException;
+
+    /**
+     * @see LoginService#loginByRememberMe(String, String, java.util.Locale)
+     */
+    @Deprecated
+    UserSession loginByRememberMe(String login, String rememberMeToken, Locale locale) throws LoginException;
+
+    /**
+     * @see LoginService#loginTrusted(String, String, java.util.Locale, java.util.Map)
+     */
+    @Deprecated
+    UserSession loginByRememberMe(String login, String rememberMeToken, Locale locale, Map<String, Object> params)
+            throws LoginException;
+
     /**
      * @see com.haulmont.cuba.security.app.LoginService#checkRememberMe(String, String)
      */
+    @Deprecated
     boolean checkRememberMe(String login, String rememberMeToken);
 
     /**
@@ -117,6 +147,7 @@ public interface LoginWorker {
      * @return user
      * @throws LoginException in case of unsuccessful authentication
      */
+    @Deprecated
     User authenticate(String login, String password, Locale locale, Map<String, Object> parameters)
             throws LoginException;
 }

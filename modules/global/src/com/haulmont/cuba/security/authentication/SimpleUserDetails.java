@@ -16,22 +16,17 @@
 
 package com.haulmont.cuba.security.authentication;
 
-public class TrustedPasswordCredentials extends AbstractCredentials {
+import com.haulmont.cuba.security.entity.User;
 
-    private String trustedClientPassword;
+public class SimpleUserDetails implements UserDetails {
+    private User user;
 
-    public TrustedPasswordCredentials() {
+    public SimpleUserDetails(User user) {
+        this.user = user;
     }
 
-    public TrustedPasswordCredentials(String trustedClientPassword) {
-        this.trustedClientPassword = trustedClientPassword;
-    }
-
-    public String getTrustedClientPassword() {
-        return trustedClientPassword;
-    }
-
-    public void setTrustedClientPassword(String trustedClientPassword) {
-        this.trustedClientPassword = trustedClientPassword;
+    @Override
+    public User getUser() {
+        return user;
     }
 }

@@ -16,9 +16,30 @@
 
 package com.haulmont.cuba.security.authentication;
 
+import java.util.Collections;
+import java.util.Locale;
+import java.util.Map;
+
 public class LoginPasswordCredentials extends AbstractCredentials {
     private String login;
     private String password;
+
+    public LoginPasswordCredentials() {
+    }
+
+    public LoginPasswordCredentials(String login, String password) {
+        this(login, password, null);
+    }
+
+    public LoginPasswordCredentials(String login, String password, Locale locale) {
+        this(login, password, locale, Collections.emptyMap());
+    }
+
+    public LoginPasswordCredentials(String login, String password, Locale locale, Map<String, Object> params) {
+        super(locale, params);
+        this.login = login;
+        this.password = password;
+    }
 
     public String getLogin() {
         return login;

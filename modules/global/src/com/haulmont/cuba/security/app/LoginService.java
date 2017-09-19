@@ -16,6 +16,7 @@
  */
 package com.haulmont.cuba.security.app;
 
+import com.haulmont.cuba.security.authentication.UserDetails;
 import com.haulmont.cuba.security.entity.User;
 import com.haulmont.cuba.security.authentication.Credentials;
 import com.haulmont.cuba.security.global.LoginException;
@@ -41,6 +42,15 @@ public interface LoginService {
      * @throws LoginException
      */
     UserSession login(Credentials credentials) throws LoginException;
+
+    /**
+     * todo JavaDoc!
+     *
+     * @param credentials
+     * @return
+     * @throws LoginException
+     */
+    UserDetails authenticate(Credentials credentials) throws LoginException;
 
     /**
      * Log out and destroy an active user session.
@@ -70,6 +80,9 @@ public interface LoginService {
      */
     @Nullable
     UserSession getSession(UUID sessionId);
+
+    // todo move to separate TrustedClientService methods below
+    // todo deprecate these methods
 
     /**
      * Get system user session from a trusted client. <br>
@@ -102,6 +115,7 @@ public interface LoginService {
      * @return created user session
      * @throws LoginException in case of unsuccessful log in
      */
+    @Deprecated
     UserSession login(String login, String password, Locale locale) throws LoginException;
 
     /**
@@ -121,6 +135,7 @@ public interface LoginService {
      * @return created user session
      * @throws LoginException in case of unsuccessful login
      */
+    @Deprecated
     UserSession login(String login, String password, Locale locale, Map<String, Object> params) throws LoginException;
 
     /**
@@ -132,6 +147,7 @@ public interface LoginService {
      * @return created user session
      * @throws LoginException in case of unsuccessful log in
      */
+    @Deprecated
     UserSession loginTrusted(String login, String password, Locale locale) throws LoginException;
 
     /**
@@ -144,6 +160,7 @@ public interface LoginService {
      * @return created user session
      * @throws LoginException in case of unsuccessful login
      */
+    @Deprecated
     UserSession loginTrusted(String login, String password, Locale locale, Map<String, Object> params)
             throws LoginException;
 
@@ -156,6 +173,7 @@ public interface LoginService {
      * @return created user session
      * @throws LoginException in case of unsuccessful login
      */
+    @Deprecated
     UserSession loginByRememberMe(String login, String rememberMeToken, Locale locale) throws LoginException;
 
     /**
@@ -168,6 +186,7 @@ public interface LoginService {
      * @return created user session
      * @throws LoginException in case of unsuccessful login
      */
+    @Deprecated
     UserSession loginByRememberMe(String login, String rememberMeToken, Locale locale, Map<String, Object> params) throws LoginException;
 
     /**
@@ -179,17 +198,20 @@ public interface LoginService {
      * @param rememberMeToken remember me token
      * @return true if remember me token exists in db
      */
+    @Deprecated
     boolean checkRememberMe(String login, String rememberMeToken);
 
     /**
      * @return true if the brute-force protection is enabled
      */
+    @Deprecated
     boolean isBruteForceProtectionEnabled();
 
     /**
      * @return a time interval in seconds for which a user is blocked after a series of
      * unsuccessful login attempts
      */
+    @Deprecated
     int getBruteForceBlockIntervalSec();
 
     /**
@@ -198,6 +220,7 @@ public interface LoginService {
      * @param ipAddress user IP-address
      * @return number of login attempts left
      */
+    @Deprecated
     int loginAttemptsLeft(String login, String ipAddress);
 
     /**
@@ -206,5 +229,6 @@ public interface LoginService {
      * @param ipAddress user IP-address
      * @return a number of login attempts left for the specified pair of login and IP-address
      */
+    @Deprecated
     int registerUnsuccessfulLogin(String login, String ipAddress);
 }

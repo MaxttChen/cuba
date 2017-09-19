@@ -23,6 +23,8 @@ import com.haulmont.cuba.core.global.*;
 import com.haulmont.cuba.core.sys.AppContext;
 import com.haulmont.cuba.core.sys.SecurityContext;
 import com.haulmont.cuba.core.sys.remoting.RemoteClientInfo;
+import com.haulmont.cuba.security.authentication.Credentials;
+import com.haulmont.cuba.security.authentication.UserDetails;
 import com.haulmont.cuba.security.entity.RememberMeToken;
 import com.haulmont.cuba.security.entity.User;
 import com.haulmont.cuba.security.global.LoginException;
@@ -33,7 +35,7 @@ import com.haulmont.cuba.security.sys.TrustedLoginHandler;
 import com.haulmont.cuba.security.sys.UserSessionManager;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.LocaleUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
@@ -84,9 +86,11 @@ public class LoginWorkerBean implements LoginWorker, AppContext.Listener, Ordere
     @Inject
     protected ClusterManagerAPI clusterManager;
 
+    // todo drop this cyclic dependency!
     @Inject
     protected Authentication authentication;
 
+    // todo move to authentication providers
     @Nullable
     protected User loadUser(String login) throws LoginException {
         if (login == null)
@@ -119,6 +123,16 @@ public class LoginWorkerBean implements LoginWorker, AppContext.Listener, Ordere
         query.setParameter("userId", user.getId());
 
         return query.getFirstResult();
+    }
+
+    @Override
+    public UserSession login(Credentials credentials) throws LoginException {
+        throw new NotImplementedException(); // todo
+    }
+
+    @Override
+    public UserDetails authenticate(Credentials credentials) throws LoginException {
+        throw new NotImplementedException(); // todo
     }
 
     @Override
@@ -235,6 +249,7 @@ public class LoginWorkerBean implements LoginWorker, AppContext.Listener, Ordere
 
     @Override
     public UserSession getSystemSession(String trustedClientPassword) throws LoginException {
+        // todo move to LoginService
         RemoteClientInfo remoteClientInfo = RemoteClientInfo.get();
         if (remoteClientInfo != null) {
             // reject request from not permitted client ip
@@ -405,6 +420,7 @@ public class LoginWorkerBean implements LoginWorker, AppContext.Listener, Ordere
 
             tx.commit();
 
+            // todo move clear permissions / store to userSessionManager.createSession
             userSessionManager.removeSession(currentSession);
             userSessionManager.clearPermissionsOnUser(session);
             userSessionManager.storeSession(session);
@@ -422,26 +438,7 @@ public class LoginWorkerBean implements LoginWorker, AppContext.Listener, Ordere
 
     @Override
     public boolean checkRememberMe(String login, String rememberMeToken) {
-        boolean verified = false;
-
-        Transaction tx = persistence.createTransaction();
-        try {
-            EntityManager em = persistence.getEntityManager();
-            TypedQuery<RememberMeToken> query = em.createQuery(
-                    "select rt from sec$RememberMeToken rt where rt.token = :token and rt.user.loginLowerCase = :userLogin",
-                    RememberMeToken.class);
-            query.setParameter("token", rememberMeToken);
-            query.setParameter("userLogin", StringUtils.lowerCase(login));
-
-            if (query.getFirstResult() != null) {
-                verified = true;
-            }
-
-            tx.commit();
-        } finally {
-            tx.end();
-        }
-        return verified;
+        return false;
     }
 
     @Override
@@ -459,6 +456,7 @@ public class LoginWorkerBean implements LoginWorker, AppContext.Listener, Ordere
             if (!passwordEncryption.checkPassword(user, password))
                 throw new LoginException(getInvalidCredentialsMessage(login, locale));
 
+            // todo move to clients ?
             Locale userLocale = locale;
             if (user.getLanguage() != null &&
                     BooleanUtils.isFalse(globalConfig.getLocaleSelectVisible())) {
