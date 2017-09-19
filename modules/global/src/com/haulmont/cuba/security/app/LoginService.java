@@ -17,6 +17,7 @@
 package com.haulmont.cuba.security.app;
 
 import com.haulmont.cuba.security.entity.User;
+import com.haulmont.cuba.security.authentication.Credentials;
 import com.haulmont.cuba.security.global.LoginException;
 import com.haulmont.cuba.security.global.UserSession;
 
@@ -31,6 +32,66 @@ import java.util.UUID;
 public interface LoginService {
 
     String NAME = "cuba_LoginService";
+
+    /**
+     * todo JavaDoc!
+     *
+     * @param credentials
+     * @return
+     * @throws LoginException
+     */
+    UserSession login(Credentials credentials) throws LoginException;
+
+    /**
+     * Log out and destroy an active user session.
+     */
+    void logout();
+
+    /**
+     * Substitute a user, obtaining all its security related environment.
+     * <br>
+     * This method replaces an active UserSession with the new one, which is returned.
+     *
+     * @param substitutedUser a user to substitute. Must be in the current users' {@link User#substitutions} list.
+     * @return new UserSession instance that contains: <ul>
+     * <li> id - the previously active user session id </li>
+     * <li> user - the logged in user </li>
+     * <li> substitutedUser - the user passed to this method  </li>
+     * <li> all security data - loaded for the substitutedUser </li>
+     * </ul>
+     */
+    UserSession substituteUser(User substitutedUser);
+
+    /**
+     * Get a UserSession from the cache of currently active sessions.
+     *
+     * @param sessionId the session id
+     * @return a UserSession instance or null, if not found
+     */
+    @Nullable
+    UserSession getSession(UUID sessionId);
+
+    /**
+     * Get system user session from a trusted client. <br>
+     * Do not call {@link #logout()} for obtained user session. It is cached on middleware for multiple clients. <br>
+     * Do not cache system session on clients since it is not replicated in cluster.
+     *
+     * @param trustedClientPassword trusted client password
+     * @return created user session
+     * @throws LoginException in case of unsuccessful login
+     */
+    UserSession getSystemSession(String trustedClientPassword) throws LoginException;
+
+    /**
+     * todo
+     *
+     * @param trustedClientPassword
+     * @return
+     * @throws LoginException
+     */
+    UserSession getAnonymousSession(String trustedClientPassword) throws LoginException;
+
+    // TODO DEPRECATE METHODS BELOW
 
     /**
      * Log in using login and user's password.
@@ -110,47 +171,9 @@ public interface LoginService {
     UserSession loginByRememberMe(String login, String rememberMeToken, Locale locale, Map<String, Object> params) throws LoginException;
 
     /**
-     * Get system user session from a trusted client. <br>
-     * Do not call {@link #logout()} for obtained user session. It is cached on middleware for multiple clients. <br>
-     * Do not cache system session on clients since it is not replicated in cluster.
+     * Check if remember me token exists in db.
      *
-     * @param trustedClientPassword trusted client password
-     * @return created user session
-     * @throws LoginException in case of unsuccessful login
-     */
-    UserSession getSystemSession(String trustedClientPassword) throws LoginException;
-
-    /**
-     * Log out and destroy an active user session.
-     */
-    void logout();
-
-    /**
-     * Substitute a user, obtaining all its security related environment.
-     * <br>
-     * This method replaces an active UserSession with the new one, which is returned.
-     *
-     * @param substitutedUser a user to substitute. Must be in the current users' {@link User#substitutions} list.
-     * @return new UserSession instance that contains: <ul>
-     * <li> id - the previously active user session id </li>
-     * <li> user - the logged in user </li>
-     * <li> substitutedUser - the user passed to this method  </li>
-     * <li> all security data - loaded for the substitutedUser </li>
-     * </ul>
-     */
-    UserSession substituteUser(User substitutedUser);
-
-    /**
-     * Get a UserSession from the cache of currently active sessions.
-     *
-     * @param sessionId the session id
-     * @return a UserSession instance or null, if not found
-     */
-    @Nullable
-    UserSession getSession(UUID sessionId);
-
-    /**
-     * Check if remember me token exists in db
+     * todo remove!
      *
      * @param login           user login
      * @param rememberMeToken remember me token

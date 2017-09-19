@@ -17,10 +17,12 @@
 package com.haulmont.cuba.security.app;
 
 import com.haulmont.cuba.core.global.UserSessionSource;
+import com.haulmont.cuba.security.authentication.Credentials;
 import com.haulmont.cuba.security.entity.SessionAction;
 import com.haulmont.cuba.security.entity.User;
 import com.haulmont.cuba.security.global.LoginException;
 import com.haulmont.cuba.security.global.UserSession;
+import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,6 +53,11 @@ public class LoginServiceBean implements LoginService {
 
     @Inject
     protected UserSessionLog userSessionLog;
+
+    @Override
+    public UserSession login(Credentials credentials) throws LoginException {
+        throw new NotImplementedException(""); // todo
+    }
 
     @Override
     public UserSession login(String login, String password, Locale locale) throws LoginException {
@@ -157,6 +164,11 @@ public class LoginServiceBean implements LoginService {
     }
 
     @Override
+    public UserSession getAnonymousSession(String trustedClientPassword) throws LoginException {
+        throw new NotImplementedException(""); // todo
+    }
+
+    @Override
     public void logout() {
         try {
             UserSession session = userSessionSource.getUserSession();
@@ -204,7 +216,6 @@ public class LoginServiceBean implements LoginService {
         // send text only to avoid ClassNotFoundException when the client has no dependency to some library
         return new LoginException(rootCause.toString());
     }
-
 
     @Override
     public boolean isBruteForceProtectionEnabled() {
