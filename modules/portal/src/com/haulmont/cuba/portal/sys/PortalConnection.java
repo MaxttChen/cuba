@@ -162,13 +162,7 @@ public class PortalConnection implements Connection {
                 log.info(String.format("IP address %s is not permitted for user %s", ipAddress,
                         userSession.getUser().toString()));
 
-                SecurityContext currentSecurityContext = AppContext.getSecurityContext();
-                try {
-                    AppContext.setSecurityContext(new SecurityContext(userSession));
-                    loginService.logout();
-                } finally {
-                    AppContext.setSecurityContext(currentSecurityContext);
-                }
+                AppContext.withSecurityContext(new SecurityContext(userSession), loginService::logout);
 
                 throw new LoginException(messages.getMainMessage("login.invalidIP"));
             }
