@@ -19,7 +19,7 @@ package com.haulmont.cuba.web.controllers;
 import com.google.common.base.Strings;
 import com.haulmont.cuba.core.sys.AppContext;
 import com.haulmont.cuba.core.sys.SecurityContext;
-import com.haulmont.cuba.security.app.IdpService;
+import com.haulmont.cuba.security.idp.IdpService;
 import com.haulmont.cuba.security.app.LoginService;
 import com.haulmont.cuba.security.global.LoginException;
 import com.haulmont.cuba.security.global.UserSession;

@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-package com.haulmont.cuba.security.authentication;
+package com.haulmont.cuba.security.auth;
 
-import com.haulmont.cuba.security.global.LoginException;
-
-public interface AuthenticationProvider {
-    UserDetails authenticate(Credentials credentials) throws LoginException;
-
-    boolean supports(Class<?> credentialsClass);
+/**
+ * Marker interface for security credentials.
+ */
+public interface Credentials {
 }

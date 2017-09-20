@@ -23,8 +23,6 @@ import com.haulmont.cuba.core.global.*;
 import com.haulmont.cuba.core.sys.AppContext;
 import com.haulmont.cuba.core.sys.SecurityContext;
 import com.haulmont.cuba.core.sys.remoting.RemoteClientInfo;
-import com.haulmont.cuba.security.authentication.Credentials;
-import com.haulmont.cuba.security.authentication.UserDetails;
 import com.haulmont.cuba.security.entity.RememberMeToken;
 import com.haulmont.cuba.security.entity.User;
 import com.haulmont.cuba.security.global.LoginException;
@@ -35,7 +33,6 @@ import com.haulmont.cuba.security.sys.TrustedLoginHandler;
 import com.haulmont.cuba.security.sys.UserSessionManager;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.LocaleUtils;
-import org.apache.commons.lang.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
@@ -53,6 +50,7 @@ import java.util.*;
  * @see LoginServiceBean
  */
 @Component(LoginWorker.NAME)
+@Deprecated
 public class LoginWorkerBean implements LoginWorker, AppContext.Listener, Ordered {
 
     private final Logger log = LoggerFactory.getLogger(LoginWorkerBean.class);
@@ -123,16 +121,6 @@ public class LoginWorkerBean implements LoginWorker, AppContext.Listener, Ordere
         query.setParameter("userId", user.getId());
 
         return query.getFirstResult();
-    }
-
-    @Override
-    public UserSession login(Credentials credentials) throws LoginException {
-        throw new NotImplementedException(); // todo
-    }
-
-    @Override
-    public UserDetails authenticate(Credentials credentials) throws LoginException {
-        throw new NotImplementedException(); // todo
     }
 
     @Override
@@ -508,6 +496,7 @@ public class LoginWorkerBean implements LoginWorker, AppContext.Listener, Ordere
         }
     }
 
+    // todo move to authentication providers
     protected void setSessionParams(UserSession userSession, Map<String, Object> params) {
         if (params != null) {
             userSession.setClientInfo((String)params.get(SessionParams.CLIENT_INFO.getId()));

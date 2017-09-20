@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.haulmont.cuba.security.authentication;
+package com.haulmont.cuba.security.auth;
 
 import com.haulmont.cuba.core.EntityManager;
 import com.haulmont.cuba.core.Persistence;

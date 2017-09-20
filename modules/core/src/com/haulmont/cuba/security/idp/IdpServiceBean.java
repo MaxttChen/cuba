@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2016 Haulmont.
+ * Copyright (c) 2008-2017 Haulmont.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-package com.haulmont.cuba.security.app;
+package com.haulmont.cuba.security.idp;
 
 import com.haulmont.cuba.core.global.GlobalConfig;
 import com.haulmont.cuba.core.global.UuidSource;
+import com.haulmont.cuba.security.app.LoginWorker;
+import com.haulmont.cuba.security.app.UserSessions;
 import com.haulmont.cuba.security.entity.User;
 import com.haulmont.cuba.security.global.IdpSession;
 import com.haulmont.cuba.security.global.LoginException;

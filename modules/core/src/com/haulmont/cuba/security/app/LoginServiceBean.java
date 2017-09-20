@@ -16,14 +16,13 @@
  */
 package com.haulmont.cuba.security.app;
 
-import com.haulmont.cuba.core.global.UserSessionSource;
-import com.haulmont.cuba.security.authentication.Credentials;
-import com.haulmont.cuba.security.authentication.UserDetails;
-import com.haulmont.cuba.security.entity.SessionAction;
+import com.haulmont.cuba.security.auth.AuthenticationService;
+import com.haulmont.cuba.security.auth.LoginPasswordCredentials;
+import com.haulmont.cuba.security.auth.RememberMeCredentials;
+import com.haulmont.cuba.security.auth.TrustedPasswordCredentials;
 import com.haulmont.cuba.security.entity.User;
 import com.haulmont.cuba.security.global.LoginException;
 import com.haulmont.cuba.security.global.UserSession;
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,47 +38,19 @@ import java.util.UUID;
  * Service to provide methods for user login/logout to the middleware.
  */
 @Component(LoginService.NAME)
+@Deprecated
 public class LoginServiceBean implements LoginService {
 
     private final Logger log = LoggerFactory.getLogger(LoginServiceBean.class);
 
     @Inject
+    protected AuthenticationService authenticationService;
+
+    @Inject
     protected LoginWorker loginWorker;
 
     @Inject
-    protected UserSessionSource userSessionSource;
-
-    @Inject
     protected BruteForceProtectionAPI bruteForceProtectionAPI;
-
-    @Inject
-    protected UserSessionLog userSessionLog;
-
-    @Override
-    public UserSession login(Credentials credentials) throws LoginException {
-        try {
-            return loginWorker.login(credentials);
-        } catch (LoginException e) {
-            log.info("Login failed: {}", e.toString());
-            throw e;
-        } catch (Throwable e) {
-            log.error("Login error", e);
-            throw wrapInLoginException(e);
-        }
-    }
-
-    @Override
-    public UserDetails authenticate(Credentials credentials) throws LoginException {
-        try {
-            return loginWorker.authenticate(credentials);
-        } catch (LoginException e) {
-            log.info("Login failed: {}", e.toString());
-            throw e;
-        } catch (Throwable e) {
-            log.error("Login error", e);
-            throw wrapInLoginException(e);
-        }
-    }
 
     @Override
     public UserSession login(String login, String password, Locale locale) throws LoginException {
@@ -88,17 +59,8 @@ public class LoginServiceBean implements LoginService {
 
     @Override
     public UserSession login(String login, String password, Locale locale, Map<String, Object> params) throws LoginException {
-        try {
-            UserSession session = loginWorker.login(login, password, locale, params);
-            userSessionLog.createSessionLogRecord(session, SessionAction.LOGIN, params);
-            return session;
-        } catch (LoginException e) {
-            log.info("Login failed: {}", e.toString());
-            throw e;
-        } catch (Throwable e) {
-            log.error("Login error", e);
-            throw wrapInLoginException(e);
-        }
+        LoginPasswordCredentials credentials = new LoginPasswordCredentials(login, password, locale, params);
+        return authenticationService.login(credentials);
     }
 
     @Override
@@ -108,17 +70,8 @@ public class LoginServiceBean implements LoginService {
 
     @Override
     public UserSession loginTrusted(String login, String password, Locale locale, Map<String, Object> params) throws LoginException {
-        try {
-            UserSession session = loginWorker.loginTrusted(login, password, locale, params);
-            userSessionLog.createSessionLogRecord(session, SessionAction.LOGIN, params);
-            return session;
-        } catch (LoginException e) {
-            log.info("Login failed: {}", e.toString());
-            throw e;
-        } catch (Throwable e) {
-            log.error("Login error", e);
-            throw wrapInLoginException(e);
-        }
+        TrustedPasswordCredentials credentials = new TrustedPasswordCredentials(login, password, locale, params);
+        return authenticationService.login(credentials);
     }
 
     @Override
@@ -129,22 +82,14 @@ public class LoginServiceBean implements LoginService {
     @Override
     public UserSession loginByRememberMe(String login, String rememberMeToken, Locale locale, Map<String, Object> params)
             throws LoginException {
-        try {
-            UserSession session = loginWorker.loginByRememberMe(login, rememberMeToken, locale, params);
-            userSessionLog.createSessionLogRecord(session, SessionAction.LOGIN, params);
-            return session;
-        } catch (LoginException e) {
-            log.info("Login failed: {}", e.toString());
-            throw e;
-        } catch (Throwable e) {
-            log.error("Login error", e);
-            throw wrapInLoginException(e);
-        }
+        RememberMeCredentials credentials = new RememberMeCredentials(login, rememberMeToken, locale, params);
+        return authenticationService.login(credentials);
     }
 
     @Override
     public UserSession getSystemSession(String trustedClientPassword) throws LoginException {
         try {
+            // todo move to TrustedClientService
             return loginWorker.getSystemSession(trustedClientPassword);
         } catch (LoginException e) {
             log.info("Login failed: {}", e.toString());
@@ -156,38 +101,13 @@ public class LoginServiceBean implements LoginService {
     }
 
     @Override
-    public UserSession getAnonymousSession(String trustedClientPassword) throws LoginException {
-        throw new NotImplementedException(""); // todo
-    }
-
-    @Override
     public void logout() {
-        try {
-            UserSession session = userSessionSource.getUserSession();
-
-            if (session != null && session.isSystem()) {
-                throw new RuntimeException("Logout of system session from client is not permitted");
-            }
-
-            userSessionLog.updateSessionLogRecord(session, SessionAction.LOGOUT);
-
-            loginWorker.logout();
-            userSessionLog.updateSessionLogRecord(session, SessionAction.LOGOUT);
-        } catch (Throwable e) {
-            log.error("Logout error", e);
-            throw new RuntimeException(e.toString());
-        }
+        authenticationService.logout();
     }
 
     @Override
     public UserSession substituteUser(User substitutedUser) {
-        UserSession currentSession = userSessionSource.getUserSession();
-        userSessionLog.updateSessionLogRecord(currentSession, SessionAction.SUBSTITUTION);
-
-        UserSession substitutionSession = loginWorker.substituteUser(substitutedUser);
-
-        userSessionLog.createSessionLogRecord(substitutionSession, SessionAction.LOGIN, currentSession, Collections.emptyMap());
-        return substitutionSession;
+        return authenticationService.substituteUser(substitutedUser);
     }
 
     @Override
@@ -197,6 +117,7 @@ public class LoginServiceBean implements LoginService {
 
     @Override
     public boolean checkRememberMe(String login, String rememberMeToken) {
+        log.warn("LoginService checkRememberMe is not supported any more. Always returns false");
         return false;
     }
 

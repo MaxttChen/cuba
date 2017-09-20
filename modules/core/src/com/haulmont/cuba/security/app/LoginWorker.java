@@ -16,8 +16,6 @@
  */
 package com.haulmont.cuba.security.app;
 
-import com.haulmont.cuba.security.authentication.Credentials;
-import com.haulmont.cuba.security.authentication.UserDetails;
 import com.haulmont.cuba.security.entity.User;
 import com.haulmont.cuba.security.global.LoginException;
 import com.haulmont.cuba.security.global.UserSession;
@@ -30,42 +28,28 @@ import java.util.UUID;
 /**
  * Interface to {@link com.haulmont.cuba.security.app.LoginWorkerBean}
  */
+@Deprecated
 public interface LoginWorker {
 
     String NAME = "cuba_LoginWorker";
 
     /**
-     * todo JavaDoc!
-     *
-     * @param credentials
-     * @return
-     * @throws LoginException
-     */
-    UserSession login(Credentials credentials) throws LoginException;
-
-    /**
-     * todo JavaDoc!
-     *
-     * @param credentials
-     * @return
-     * @throws LoginException
-     */
-    UserDetails authenticate(Credentials credentials) throws LoginException;
-
-    /**
      * @see LoginService#logout()
      */
+    @Deprecated
     void logout();
 
     /**
      * @see LoginService#substituteUser(User)
      */
+    @Deprecated
     UserSession substituteUser(User substitutedUser);
 
     /**
      * @see LoginService#getSession(UUID)
      */
     @Nullable
+    @Deprecated
     UserSession getSession(UUID sessionId);
 
     /**
@@ -75,6 +59,7 @@ public interface LoginWorker {
      * @return system user session that is not replicated in cluster
      * @throws LoginException in case of unsuccessful log in
      */
+    @Deprecated
     UserSession loginSystem(String login) throws LoginException;
 
     /**
@@ -83,6 +68,7 @@ public interface LoginWorker {
      * @return anonymous user session that is not replicated in cluster
      * @throws LoginException in case of login problem
      */
+    @Deprecated
     UserSession loginAnonymous() throws LoginException;
 
     // TODO DEPRECATE METHODS BELOW

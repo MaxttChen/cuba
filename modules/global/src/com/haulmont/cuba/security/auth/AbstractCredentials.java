@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.haulmont.cuba.security.authentication;
+package com.haulmont.cuba.security.auth;
 
 import java.util.Locale;
 import java.util.Map;

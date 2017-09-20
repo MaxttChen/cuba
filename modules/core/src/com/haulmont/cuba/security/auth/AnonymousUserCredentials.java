@@ -14,19 +14,21 @@
  * limitations under the License.
  */
 
-package com.haulmont.cuba.security.authentication;
+package com.haulmont.cuba.security.auth;
 
-import com.haulmont.cuba.security.entity.User;
+import java.util.Collections;
+import java.util.Locale;
+import java.util.Map;
 
-public class SimpleUserDetails implements UserDetails {
-    private User user;
-
-    public SimpleUserDetails(User user) {
-        this.user = user;
+public class AnonymousUserCredentials extends AbstractCredentials {
+    public AnonymousUserCredentials() {
     }
 
-    @Override
-    public User getUser() {
-        return user;
+    public AnonymousUserCredentials(Locale locale) {
+        super(locale, Collections.emptyMap());
+    }
+
+    public AnonymousUserCredentials(Locale locale, Map<String, Object> params) {
+        super(locale, params);
     }
 }

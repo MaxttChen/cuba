@@ -22,7 +22,7 @@ import com.google.gson.JsonSyntaxException;
 import com.haulmont.bali.util.URLEncodeUtils;
 import com.haulmont.cuba.core.global.GlobalConfig;
 import com.haulmont.cuba.core.global.UserSessionSource;
-import com.haulmont.cuba.security.app.IdpService;
+import com.haulmont.cuba.security.idp.IdpService;
 import com.haulmont.cuba.security.app.LoginService;
 import com.haulmont.cuba.security.global.IdpSession;
 import com.haulmont.cuba.security.global.LoginException;

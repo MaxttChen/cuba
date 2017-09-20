@@ -14,26 +14,12 @@
  * limitations under the License.
  */
 
-package com.haulmont.cuba.security.authentication;
+package com.haulmont.cuba.security.auth;
 
-import com.haulmont.cuba.core.Persistence;
 import com.haulmont.cuba.security.global.LoginException;
 
-import javax.inject.Inject;
+public interface AuthenticationProvider {
+    UserDetails authenticate(Credentials credentials) throws LoginException;
 
-public class LoginPasswordAuthenticationProvider extends AbstractAuthenticationProvider {
-    @Inject
-    public LoginPasswordAuthenticationProvider(Persistence persistence) {
-        super(persistence);
-    }
-
-    @Override
-    public UserDetails authenticate(Credentials credentials) throws LoginException {
-        return null;
-    }
-
-    @Override
-    public boolean supports(Class<?> credentialsClass) {
-        return LoginPasswordCredentials.class.isAssignableFrom(credentialsClass);
-    }
+    boolean supports(Class<?> credentialsClass);
 }

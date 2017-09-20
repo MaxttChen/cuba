@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package com.haulmont.cuba.security.authentication;
+package com.haulmont.cuba.security.auth;
 
 import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
 
-public class RememberMeCredentials extends AbstractCredentials {
+public class RememberMeCredentials extends AbstractClientCredentials {
     private String login;
     private String rememberMeToken;
 

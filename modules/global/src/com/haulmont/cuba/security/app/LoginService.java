@@ -16,9 +16,7 @@
  */
 package com.haulmont.cuba.security.app;
 
-import com.haulmont.cuba.security.authentication.UserDetails;
 import com.haulmont.cuba.security.entity.User;
-import com.haulmont.cuba.security.authentication.Credentials;
 import com.haulmont.cuba.security.global.LoginException;
 import com.haulmont.cuba.security.global.UserSession;
 
@@ -30,31 +28,15 @@ import java.util.UUID;
 /**
  * Service interface defining methods to login users to the middleware.
  */
+@Deprecated
 public interface LoginService {
 
     String NAME = "cuba_LoginService";
 
     /**
-     * todo JavaDoc!
-     *
-     * @param credentials
-     * @return
-     * @throws LoginException
-     */
-    UserSession login(Credentials credentials) throws LoginException;
-
-    /**
-     * todo JavaDoc!
-     *
-     * @param credentials
-     * @return
-     * @throws LoginException
-     */
-    UserDetails authenticate(Credentials credentials) throws LoginException;
-
-    /**
      * Log out and destroy an active user session.
      */
+    @Deprecated
     void logout();
 
     /**
@@ -70,6 +52,7 @@ public interface LoginService {
      * <li> all security data - loaded for the substitutedUser </li>
      * </ul>
      */
+    @Deprecated
     UserSession substituteUser(User substitutedUser);
 
     /**
@@ -79,6 +62,7 @@ public interface LoginService {
      * @return a UserSession instance or null, if not found
      */
     @Nullable
+    @Deprecated
     UserSession getSession(UUID sessionId);
 
     // todo move to separate TrustedClientService methods below
@@ -93,16 +77,8 @@ public interface LoginService {
      * @return created user session
      * @throws LoginException in case of unsuccessful login
      */
+    @Deprecated
     UserSession getSystemSession(String trustedClientPassword) throws LoginException;
-
-    /**
-     * todo
-     *
-     * @param trustedClientPassword
-     * @return
-     * @throws LoginException
-     */
-    UserSession getAnonymousSession(String trustedClientPassword) throws LoginException;
 
     // TODO DEPRECATE METHODS BELOW
 

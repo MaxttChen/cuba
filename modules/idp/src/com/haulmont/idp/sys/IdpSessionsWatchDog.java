@@ -18,7 +18,7 @@ package com.haulmont.idp.sys;
 
 import com.haulmont.cuba.core.sys.AppContext;
 import com.haulmont.cuba.core.sys.SecurityContext;
-import com.haulmont.cuba.security.app.IdpService;
+import com.haulmont.cuba.security.idp.IdpService;
 import com.haulmont.cuba.security.app.LoginService;
 import com.haulmont.cuba.security.global.LoginException;
 import com.haulmont.cuba.security.global.UserSession;
