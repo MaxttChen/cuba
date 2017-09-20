@@ -74,23 +74,7 @@ public class PortalConnection implements Connection {
 
         UserSession userSession = doLogin(login, password, locale, getSessionParams(ipAddress, clientInfo));
 
-        if (!StringUtils.isBlank(userSession.getUser().getIpMask())) {
-            IpMatcher ipMatcher = new IpMatcher(userSession.getUser().getIpMask());
-            if (!ipMatcher.match(ipAddress)) {
-                log.info(String.format("IP address %s is not permitted for user %s", ipAddress,
-                        userSession.getUser().toString()));
-
-                SecurityContext currentSecurityContext = AppContext.getSecurityContext();
-                try {
-                    AppContext.setSecurityContext(new SecurityContext(userSession));
-                    loginService.logout();
-                } finally {
-                    AppContext.setSecurityContext(currentSecurityContext);
-                }
-
-                throw new LoginException(messages.getMainMessage("login.invalidIP"));
-            }
-        }
+        checkIpMask(userSession, ipAddress);
 
         session = portalSessionFactory.createPortalSession(userSession, locale);
         session.setAuthenticated(true);
@@ -169,6 +153,26 @@ public class PortalConnection implements Connection {
             log.warn("Error on logout", e);
         }
         session = null;
+    }
+
+    protected void checkIpMask(UserSession userSession, String ipAddress) throws LoginException {
+        if (!StringUtils.isBlank(userSession.getUser().getIpMask())) {
+            IpMatcher ipMatcher = new IpMatcher(userSession.getUser().getIpMask());
+            if (!ipMatcher.match(ipAddress)) {
+                log.info(String.format("IP address %s is not permitted for user %s", ipAddress,
+                        userSession.getUser().toString()));
+
+                SecurityContext currentSecurityContext = AppContext.getSecurityContext();
+                try {
+                    AppContext.setSecurityContext(new SecurityContext(userSession));
+                    loginService.logout();
+                } finally {
+                    AppContext.setSecurityContext(currentSecurityContext);
+                }
+
+                throw new LoginException(messages.getMainMessage("login.invalidIP"));
+            }
+        }
     }
 
     @Override
