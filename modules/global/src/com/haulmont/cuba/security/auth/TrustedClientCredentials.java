@@ -19,20 +19,20 @@ package com.haulmont.cuba.security.auth;
 import java.util.Locale;
 import java.util.Map;
 
-public class TrustedPasswordCredentials extends AbstractClientCredentials {
+public class TrustedClientCredentials extends AbstractClientCredentials {
 
     private String login;
     private String trustedClientPassword;
 
-    public TrustedPasswordCredentials() {
+    public TrustedClientCredentials() {
     }
 
-    public TrustedPasswordCredentials(String trustedClientPassword) {
+    public TrustedClientCredentials(String trustedClientPassword) {
         this.trustedClientPassword = trustedClientPassword;
     }
 
-    public TrustedPasswordCredentials(String login, String trustedClientPassword,
-                                      Locale locale, Map<String, Object> params) {
+    public TrustedClientCredentials(String login, String trustedClientPassword,
+                                    Locale locale, Map<String, Object> params) {
         super(locale, params);
 
         this.login = login;
@@ -53,5 +53,12 @@ public class TrustedPasswordCredentials extends AbstractClientCredentials {
 
     public void setLogin(String login) {
         this.login = login;
+    }
+
+    @Override
+    public String toString() {
+        return "TrustedClientCredentials{" +
+                "login='" + login + '\'' +
+                '}';
     }
 }

@@ -16,13 +16,9 @@
 
 package com.haulmont.cuba.security.auth;
 
-import com.haulmont.cuba.security.entity.User;
+import com.haulmont.cuba.security.global.LoginException;
+import com.haulmont.cuba.security.global.UserSession;
 
-import java.io.Serializable;
-
-// todo JavaDoc
-public interface UserDetails extends Serializable {
-    User getUser();
-
-    // todo session attributes
+public interface LoginConstraint {
+    void checkLoginPermitted(Credentials credentials, UserDetails userDetails, UserSession session) throws LoginException;
 }

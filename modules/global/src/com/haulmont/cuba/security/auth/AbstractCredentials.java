@@ -19,8 +19,9 @@ package com.haulmont.cuba.security.auth;
 import java.util.Locale;
 import java.util.Map;
 
-public abstract class AbstractCredentials implements Credentials {
+public abstract class AbstractCredentials implements LocalizedCredentials {
     private Locale locale;
+    private boolean overrideLocale = true;
     private Map<String, Object> params;
 
     public AbstractCredentials(Locale locale, Map<String, Object> params) {
@@ -31,6 +32,7 @@ public abstract class AbstractCredentials implements Credentials {
     public AbstractCredentials() {
     }
 
+    @Override
     public Locale getLocale() {
         return locale;
     }
@@ -45,5 +47,14 @@ public abstract class AbstractCredentials implements Credentials {
 
     public void setParams(Map<String, Object> params) {
         this.params = params;
+    }
+
+    @Override
+    public boolean isOverrideLocale() {
+        return overrideLocale;
+    }
+
+    public void setOverrideLocale(boolean overrideLocale) {
+        this.overrideLocale = overrideLocale;
     }
 }

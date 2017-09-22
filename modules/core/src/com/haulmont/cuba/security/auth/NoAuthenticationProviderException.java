@@ -16,13 +16,8 @@
 
 package com.haulmont.cuba.security.auth;
 
-import com.haulmont.cuba.security.entity.User;
-
-import java.io.Serializable;
-
-// todo JavaDoc
-public interface UserDetails extends Serializable {
-    User getUser();
-
-    // todo session attributes
+public class NoAuthenticationProviderException extends RuntimeException {
+    public NoAuthenticationProviderException(String message) {
+        super(message);
+    }
 }

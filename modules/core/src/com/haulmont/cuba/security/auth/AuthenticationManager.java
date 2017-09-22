@@ -20,8 +20,8 @@ import com.haulmont.cuba.security.entity.User;
 import com.haulmont.cuba.security.global.LoginException;
 import com.haulmont.cuba.security.global.UserSession;
 
-public interface AuthenticationWorker {
-    String NAME = "cuba_AuthenticationWorker";
+public interface AuthenticationManager {
+    String NAME = "cuba_AuthenticationManager";
 
     /**
      * todo JavaDoc!

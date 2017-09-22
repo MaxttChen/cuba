@@ -16,13 +16,10 @@
 
 package com.haulmont.cuba.security.auth;
 
-import com.haulmont.cuba.security.entity.User;
+import java.util.Locale;
 
-import java.io.Serializable;
+public interface LocalizedCredentials extends Credentials {
+    boolean isOverrideLocale();
 
-// todo JavaDoc
-public interface UserDetails extends Serializable {
-    User getUser();
-
-    // todo session attributes
+    Locale getLocale();
 }

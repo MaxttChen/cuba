@@ -16,12 +16,17 @@
 
 package com.haulmont.cuba.security.auth;
 
+import com.haulmont.cuba.core.global.ClientType;
+
 import java.util.Locale;
 import java.util.Map;
 
 public abstract class AbstractClientCredentials extends AbstractCredentials {
     private String clientInfo;
     private String address;
+    private ClientType clientType;
+
+    private boolean checkClientPermissions = true;
 
     public AbstractClientCredentials(Locale locale, Map<String, Object> params) {
         super(locale, params);
@@ -44,5 +49,21 @@ public abstract class AbstractClientCredentials extends AbstractCredentials {
 
     public void setAddress(String address) {
         this.address = address;
+    }
+
+    public ClientType getClientType() {
+        return clientType;
+    }
+
+    public void setClientType(ClientType clientType) {
+        this.clientType = clientType;
+    }
+
+    public boolean isCheckClientPermissions() {
+        return checkClientPermissions;
+    }
+
+    public void setCheckClientPermissions(boolean checkClientPermissions) {
+        this.checkClientPermissions = checkClientPermissions;
     }
 }

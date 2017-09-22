@@ -36,7 +36,7 @@ public class AuthenticationServiceBean implements AuthenticationService {
     private final Logger log = LoggerFactory.getLogger(AuthenticationServiceBean.class);
 
     @Inject
-    protected AuthenticationWorker authenticationWorker;
+    protected AuthenticationManager authenticationManager;
     @Inject
     protected UserSessionSource userSessionSource;
     @Inject
@@ -46,7 +46,7 @@ public class AuthenticationServiceBean implements AuthenticationService {
     public UserSession login(Credentials credentials) throws LoginException {
         try {
             //noinspection UnnecessaryLocalVariable
-            UserSession session = authenticationWorker.login(credentials);
+            UserSession session = authenticationManager.login(credentials);
 
             userSessionLog.createSessionLogRecord(session, SessionAction.LOGIN, Collections.emptyMap());
 
@@ -64,7 +64,7 @@ public class AuthenticationServiceBean implements AuthenticationService {
     public UserDetails authenticate(Credentials credentials) throws LoginException {
         try {
             //noinspection UnnecessaryLocalVariable
-            UserDetails userDetails = authenticationWorker.authenticate(credentials);
+            UserDetails userDetails = authenticationManager.authenticate(credentials);
             return userDetails;
         } catch (LoginException e) {
             log.info("Authentication failed: {}", e.toString());
@@ -86,7 +86,7 @@ public class AuthenticationServiceBean implements AuthenticationService {
 
             userSessionLog.updateSessionLogRecord(session, SessionAction.LOGOUT);
 
-            authenticationWorker.logout();
+            authenticationManager.logout();
 
             userSessionLog.updateSessionLogRecord(session, SessionAction.LOGOUT);
         } catch (Throwable e) {
@@ -101,7 +101,7 @@ public class AuthenticationServiceBean implements AuthenticationService {
             UserSession currentSession = userSessionSource.getUserSession();
             userSessionLog.updateSessionLogRecord(currentSession, SessionAction.SUBSTITUTION);
 
-            UserSession substitutionSession = authenticationWorker.substituteUser(substitutedUser);
+            UserSession substitutionSession = authenticationManager.substituteUser(substitutedUser);
 
             userSessionLog.createSessionLogRecord(substitutionSession, SessionAction.LOGIN, currentSession, Collections.emptyMap());
             return substitutionSession;

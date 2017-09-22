@@ -14,32 +14,19 @@
  * limitations under the License.
  */
 
-package com.haulmont.cuba.security.auth;
+package com.haulmont.cuba.security.auth.events;
 
-import com.haulmont.cuba.security.entity.User;
-import com.haulmont.cuba.security.global.LoginException;
 import com.haulmont.cuba.security.global.UserSession;
-import org.springframework.stereotype.Component;
+import org.springframework.context.ApplicationEvent;
 
-@Component(AuthenticationWorker.NAME)
-public class AuthenticationWorkerBean implements AuthenticationWorker {
-    @Override
-    public UserSession login(Credentials credentials) throws LoginException {
-        return null;
+public class UserLoggedOutEvent extends ApplicationEvent {
+
+    public UserLoggedOutEvent(UserSession source) {
+        super(source);
     }
 
     @Override
-    public UserDetails authenticate(Credentials credentials) throws LoginException {
-        return null;
-    }
-
-    @Override
-    public void logout() {
-
-    }
-
-    @Override
-    public UserSession substituteUser(User substitutedUser) {
-        return null;
+    public UserSession getSource() {
+        return (UserSession) super.getSource();
     }
 }

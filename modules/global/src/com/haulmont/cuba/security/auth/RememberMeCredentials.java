@@ -56,4 +56,11 @@ public class RememberMeCredentials extends AbstractClientCredentials {
     public void setLogin(String login) {
         this.login = login;
     }
+
+    @Override
+    public String toString() {
+        return "RememberMeCredentials{" +
+                "login='" + login + '\'' +
+                '}';
+    }
 }

@@ -19,7 +19,7 @@ package com.haulmont.cuba.security.app;
 import com.haulmont.cuba.security.auth.AuthenticationService;
 import com.haulmont.cuba.security.auth.LoginPasswordCredentials;
 import com.haulmont.cuba.security.auth.RememberMeCredentials;
-import com.haulmont.cuba.security.auth.TrustedPasswordCredentials;
+import com.haulmont.cuba.security.auth.TrustedClientCredentials;
 import com.haulmont.cuba.security.entity.User;
 import com.haulmont.cuba.security.global.LoginException;
 import com.haulmont.cuba.security.global.UserSession;
@@ -70,7 +70,7 @@ public class LoginServiceBean implements LoginService {
 
     @Override
     public UserSession loginTrusted(String login, String password, Locale locale, Map<String, Object> params) throws LoginException {
-        TrustedPasswordCredentials credentials = new TrustedPasswordCredentials(login, password, locale, params);
+        TrustedClientCredentials credentials = new TrustedClientCredentials(login, password, locale, params);
         return authenticationService.login(credentials);
     }
 
