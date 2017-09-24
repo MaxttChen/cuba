@@ -14,20 +14,23 @@
  * limitations under the License.
  */
 
-package com.haulmont.cuba.security.auth.constraint;
+package com.haulmont.cuba.security.auth.events;
 
 import com.haulmont.cuba.security.auth.Credentials;
-import com.haulmont.cuba.security.auth.LoginConstraint;
-import com.haulmont.cuba.security.auth.UserDetails;
-import com.haulmont.cuba.security.global.LoginException;
-import com.haulmont.cuba.security.global.UserSession;
-import org.springframework.stereotype.Component;
+import org.springframework.context.ApplicationEvent;
 
-@Component("cuba_BruteForceLoginConstraint")
-public class BruteForceLoginConstraint implements LoginConstraint {
+public class BeforeAuthenticationEvent extends ApplicationEvent {
+
+    public BeforeAuthenticationEvent(Credentials credentials) {
+        super(credentials);
+    }
+
     @Override
-    public void checkLoginPermitted(Credentials credentials, UserDetails userDetails, UserSession session)
-            throws LoginException {
-        // todo
+    public Credentials getSource() {
+        return (Credentials) super.getSource();
+    }
+
+    public Credentials getCredentials() {
+        return (Credentials) super.getSource();
     }
 }

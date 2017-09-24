@@ -23,7 +23,7 @@ import java.util.Map;
 
 public abstract class AbstractClientCredentials extends AbstractCredentials {
     private String clientInfo;
-    private String address;
+    private String ipAddress;
     private ClientType clientType;
 
     private boolean checkClientPermissions = true;
@@ -43,12 +43,12 @@ public abstract class AbstractClientCredentials extends AbstractCredentials {
         this.clientInfo = clientInfo;
     }
 
-    public String getAddress() {
-        return address;
+    public String getIpAddress() {
+        return ipAddress;
     }
 
-    public void setAddress(String address) {
-        this.address = address;
+    public void setIpAddress(String ipAddress) {
+        this.ipAddress = ipAddress;
     }
 
     public ClientType getClientType() {
@@ -66,4 +66,6 @@ public abstract class AbstractClientCredentials extends AbstractCredentials {
     public void setCheckClientPermissions(boolean checkClientPermissions) {
         this.checkClientPermissions = checkClientPermissions;
     }
+
+    public abstract String getUserIdentifier();
 }

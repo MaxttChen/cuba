@@ -18,8 +18,11 @@ package com.haulmont.cuba.security.auth;
 
 import com.haulmont.cuba.security.global.LoginException;
 
+import javax.annotation.Nullable;
+
 public interface AuthenticationProvider {
-    UserDetails authenticate(Credentials credentials) throws LoginException;
+    @Nullable
+    UserSessionDetails authenticate(Credentials credentials) throws LoginException;
 
     boolean supports(Class<?> credentialsClass);
 }

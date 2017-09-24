@@ -16,8 +16,10 @@
 
 package com.haulmont.cuba.security.auth;
 
+import java.io.Serializable;
+
 /**
  * Marker interface for security credentials.
  */
-public interface Credentials {
+public interface Credentials extends Serializable {
 }

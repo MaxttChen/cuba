@@ -466,7 +466,7 @@ public class LoginWorkerBean implements LoginWorker, AppContext.Listener, Ordere
         }
     }
 
-    // todo move to LoginConstraint
+    // todo move to UserPermissionsChecker
     protected void checkPermissions(String login, Map<String, Object> params, Locale userLocale, UserSession session)
             throws LoginException {
         String clientTypeParam = (String) params.get(ClientType.class.getName());

@@ -19,18 +19,14 @@ package com.haulmont.cuba.security.auth.events;
 import com.haulmont.cuba.security.global.UserSession;
 import org.springframework.context.ApplicationEvent;
 
-public class UserLoggedOutEvent extends ApplicationEvent {
+public class UserLoggedInEvent extends ApplicationEvent {
 
-    public UserLoggedOutEvent(UserSession source) {
+    public UserLoggedInEvent(UserSession source) {
         super(source);
     }
 
     @Override
     public UserSession getSource() {
-        return (UserSession) super.getSource();
-    }
-
-    public UserSession getUserSession() {
         return (UserSession) super.getSource();
     }
 }

@@ -20,18 +20,16 @@ import com.haulmont.cuba.core.EntityManager;
 import com.haulmont.cuba.core.Persistence;
 import com.haulmont.cuba.core.Transaction;
 import com.haulmont.cuba.core.TypedQuery;
+import com.haulmont.cuba.core.app.ClusterManager;
 import com.haulmont.cuba.core.global.Events;
-import com.haulmont.cuba.core.global.MessageTools;
 import com.haulmont.cuba.core.global.UserSessionSource;
-import com.haulmont.cuba.security.auth.events.AuthenticationFailureEvent;
-import com.haulmont.cuba.security.auth.events.AuthenticationSuccessEvent;
-import com.haulmont.cuba.security.auth.events.UserLoggedOutEvent;
+import com.haulmont.cuba.security.auth.events.*;
 import com.haulmont.cuba.security.entity.User;
 import com.haulmont.cuba.security.global.LoginException;
 import com.haulmont.cuba.security.global.NoUserSessionException;
 import com.haulmont.cuba.security.global.UserSession;
 import com.haulmont.cuba.security.sys.UserSessionManager;
-import org.apache.commons.lang.LocaleUtils;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -39,7 +37,6 @@ import org.springframework.stereotype.Component;
 import javax.inject.Inject;
 import javax.persistence.NoResultException;
 import java.util.List;
-import java.util.Locale;
 
 @Component(AuthenticationManager.NAME)
 public class AuthenticationManagerBean implements AuthenticationManager {
@@ -55,64 +52,57 @@ public class AuthenticationManagerBean implements AuthenticationManager {
     @Inject
     protected Persistence persistence;
     @Inject
-    protected MessageTools messageTools;
+    protected ClusterManager clusterManager;
 
     @Inject
     protected List<AuthenticationProvider> authenticationProviders;
-    @Inject
-    protected List<LoginConstraint> loginConstraints;
 
     @Override
-    public UserSession login(Credentials credentials) throws LoginException {
+    public UserSessionDetails login(Credentials credentials) throws LoginException {
+        UserSessionDetails userSessionDetails = null;
+
         try (Transaction tx = persistence.getTransaction()) {
-            // todo publish event
+            publishBeforeLoginEvent(credentials);
 
-            UserDetails userDetails = authenticateInternal(credentials);
-            User user = userDetails.getUser();
-
-            // create session
-
-            Locale userLocale = null;
-            if (credentials instanceof LocalizedCredentials) {
-                LocalizedCredentials localizedCredentials = (LocalizedCredentials) credentials;
-                if (localizedCredentials.isOverrideLocale()) {
-                    userLocale = localizedCredentials.getLocale();
-                }
-            }
-            if (userLocale == null) {
-                if (user.getLanguage() != null) {
-                    userLocale = LocaleUtils.toLocale(user.getLanguage());
-                } else {
-                    userLocale = messageTools.getDefaultLocale();
-                }
-            }
-
-            UserSession session = userSessionManager.createSession(userDetails.getUser(), userLocale, false);
-            userSessionManager.clearPermissionsOnUser(session);
-            if (loginConstraints != null) {
-                for (LoginConstraint loginConstraint : loginConstraints) {
-                    loginConstraint.checkLoginPermitted(credentials, userDetails, session);
-                }
-            }
-
-            // todo publish event
+            userSessionDetails = authenticateInternal(credentials);
 
             tx.commit();
 
-            // store session
+            userSessionManager.clearPermissionsOnUser(userSessionDetails.getSession());
 
-            return null;
+            if (credentials instanceof SyncSessionCredentials
+                    && ((SyncSessionCredentials) credentials).isSyncNewUserSessionReplication()) {
+                boolean saved = clusterManager.getSyncSendingForCurrentThread();
+                clusterManager.setSyncSendingForCurrentThread(true);
+                try {
+                    userSessionManager.storeSession(userSessionDetails.getSession());
+                } finally {
+                    clusterManager.setSyncSendingForCurrentThread(saved);
+                }
+            } else {
+                userSessionManager.storeSession(userSessionDetails.getSession());
+            }
+
+            log.info("Logged in: {}", userSessionDetails.getSession());
+
+            publishUserLoggedInEvent(userSessionDetails.getSession());
+
+            return userSessionDetails;
+        } finally {
+            UserSession userSession = userSessionDetails != null ? userSessionDetails.getSession() : null;
+
+            publishAfterLoginEvent(credentials, userSession);
         }
     }
 
     @Override
-    public UserDetails authenticate(Credentials credentials) throws LoginException {
+    public UserSessionDetails authenticate(Credentials credentials) throws LoginException {
         try (Transaction tx = persistence.getTransaction()) {
-            UserDetails userDetails = authenticateInternal(credentials);
+            UserSessionDetails userSessionDetails = authenticateInternal(credentials);
 
             tx.commit();
 
-            return userDetails;
+            return userSessionDetails;
         }
     }
 
@@ -142,26 +132,16 @@ public class AuthenticationManagerBean implements AuthenticationManager {
             User user;
             if (currentSession.getUser().equals(substitutedUser)) {
                 user = em.find(User.class, substitutedUser.getId());
-                if (user == null)
+                if (user == null) {
                     throw new NoResultException("User not found");
+                }
             } else {
-                TypedQuery<User> query = em.createQuery(
-                        "select s.substitutedUser from sec$User u join u.substitutions s " +
-                                "where u.id = ?1 and s.substitutedUser.id = ?2",
-                        User.class
-                );
-                query.setParameter(1, currentSession.getUser());
-                query.setParameter(2, substitutedUser);
-                List<User> list = query.getResultList();
-                if (list.isEmpty())
-                    throw new NoResultException("User not found");
-                else
-                    user = list.get(0);
+                user = loadSubstitutedUser(substitutedUser, currentSession, em);
             }
 
             UserSession session = userSessionManager.createSession(currentSession, user);
 
-            // todo publish event
+            publishUserSubstitutedEvent(currentSession, session);
 
             tx.commit();
 
@@ -173,45 +153,116 @@ public class AuthenticationManagerBean implements AuthenticationManager {
         }
     }
 
-    protected UserDetails authenticateInternal(Credentials credentials) throws LoginException {
+    protected UserSessionDetails authenticateInternal(Credentials credentials) throws LoginException {
+        publishBeforeAuthenticationEvent(credentials);
+
         Class<? extends Credentials> credentialsClass = credentials.getClass();
 
-        for (AuthenticationProvider provider : getProviders()) {
-            if (!provider.supports(credentialsClass)) {
-                continue;
-            }
-
-            log.debug("Authentication attempt using {}", provider.getClass().getName());
-
-            try {
-                UserDetails details = provider.authenticate(credentials);
-
-                if (details != null) {
-                    log.debug("Authentication successful for {}", credentials);
-
-                    // publish auth success
-                    publishAuthenticationSuccess(details, credentials);
-
-                    return details;
+        UserSessionDetails details = null;
+        try {
+            for (AuthenticationProvider provider : getProviders()) {
+                if (!provider.supports(credentialsClass)) {
+                    continue;
                 }
-            } catch (LoginException e) {
-                // publish auth fail
-                publishAuthenticationFailed(provider, credentials);
 
-                throw e;
+                log.debug("Authentication attempt using {}", provider.getClass().getName());
+
+                try {
+                    details = provider.authenticate(credentials);
+
+                    if (details != null) {
+                        publishAfterAuthenticationEvent(credentials, details);
+
+                        log.debug("Authentication successful for {}", credentials);
+
+                        // publish auth success
+                        publishAuthenticationSuccess(details, credentials);
+
+                        return details;
+                    }
+                } catch (LoginException e) {
+                    // publish auth fail
+                    publishAuthenticationFailed(provider, credentials, e);
+
+                    throw e;
+                }
             }
+        } finally {
+            publishAfterAuthenticationEvent(credentials, details);
         }
 
-        throw new NoAuthenticationProviderException(
+        throw new UnsupportedCredentialsException(
                 "Unable to find authentication provider that supports credentials class "
                         + credentialsClass.getName());
     }
 
-    protected void publishAuthenticationFailed(AuthenticationProvider provider, Credentials credentials) {
-        events.publish(new AuthenticationFailureEvent(credentials, provider));
+    protected User loadSubstitutedUser(User substitutedUser, UserSession currentSession, EntityManager em) {
+        TypedQuery<User> query = em.createQuery(
+                "select s.substitutedUser from sec$User u join u.substitutions s " +
+                        "where u.id = ?1 and s.substitutedUser.id = ?2",
+                User.class
+        );
+        query.setParameter(1, currentSession.getUser());
+        query.setParameter(2, substitutedUser);
+        List<User> list = query.getResultList();
+        if (list.isEmpty()) {
+            throw new NoResultException("User not found");
+        }
+
+        return list.get(0);
     }
 
-    protected void publishAuthenticationSuccess(UserDetails details, Credentials credentials) {
+    protected void publishAfterLoginEvent(Credentials credentials, UserSession userSession) {
+        events.publish(new AfterLoginEvent(credentials, userSession));
+    }
+
+    protected void publishUserSubstitutedEvent(UserSession currentSession, UserSession substitutedSession) {
+        events.publish(new UserSubstitutedEvent(currentSession, substitutedSession));
+    }
+
+    protected void publishUserLoggedInEvent(UserSession userSession) {
+        events.publish(new UserLoggedInEvent(userSession));
+    }
+
+    protected void publishBeforeLoginEvent(Credentials credentials) throws LoginException {
+        try {
+            events.publish(new BeforeLoginEvent(credentials));
+        } catch (RuntimeException e) {
+            rethrowLoginException(e);
+        }
+    }
+
+    protected void publishBeforeAuthenticationEvent(Credentials credentials) throws LoginException {
+        try {
+            events.publish(new BeforeAuthenticationEvent(credentials));
+        } catch (RuntimeException e) {
+            rethrowLoginException(e);
+        }
+    }
+
+    protected void rethrowLoginException(RuntimeException e) throws LoginException {
+        Throwable cause = ExceptionUtils.getCause(e);
+        if (cause instanceof LoginException) {
+            throw (LoginException) cause;
+        } else {
+            throw e;
+        }
+    }
+
+    protected void publishAfterAuthenticationEvent(Credentials credentials, UserSessionDetails userSessionDetails)
+            throws LoginException {
+        try {
+            events.publish(new AfterAuthenticationEvent(credentials, userSessionDetails));
+        } catch (RuntimeException e) {
+            rethrowLoginException(e);
+        }
+    }
+
+    protected void publishAuthenticationFailed(AuthenticationProvider provider, Credentials credentials, LoginException e) {
+        events.publish(new AuthenticationFailureEvent(credentials, provider, e));
+    }
+
+    protected void publishAuthenticationSuccess(UserSessionDetails details, Credentials credentials) {
         events.publish(new AuthenticationSuccessEvent(credentials, details));
     }
 

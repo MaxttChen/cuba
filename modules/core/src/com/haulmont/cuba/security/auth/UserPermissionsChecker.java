@@ -16,8 +16,8 @@
 
 package com.haulmont.cuba.security.auth;
 
-public class NoAuthenticationProviderException extends RuntimeException {
-    public NoAuthenticationProviderException(String message) {
-        super(message);
-    }
+import com.haulmont.cuba.security.global.LoginException;
+
+public interface UserPermissionsChecker {
+    void check(Credentials credentials, UserSessionDetails userSessionDetails) throws LoginException;
 }

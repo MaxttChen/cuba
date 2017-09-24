@@ -16,17 +16,8 @@
 
 package com.haulmont.cuba.security.auth;
 
-import com.haulmont.cuba.security.entity.User;
-
-public class SimpleUserDetails implements UserDetails {
-    private User user;
-
-    public SimpleUserDetails(User user) {
-        this.user = user;
-    }
-
-    @Override
-    public User getUser() {
-        return user;
+public class UnsupportedCredentialsException extends RuntimeException {
+    public UnsupportedCredentialsException(String message) {
+        super(message);
     }
 }

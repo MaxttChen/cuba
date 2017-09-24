@@ -21,6 +21,9 @@ import java.util.Locale;
 import java.util.Map;
 
 public class LoginPasswordCredentials extends AbstractClientCredentials {
+
+    private static final long serialVersionUID = 348348249386685775L;
+
     private String login;
     private String password;
 
@@ -39,6 +42,11 @@ public class LoginPasswordCredentials extends AbstractClientCredentials {
         super(locale, params);
         this.login = login;
         this.password = password;
+    }
+
+    @Override
+    public String getUserIdentifier() {
+        return getLogin();
     }
 
     public String getLogin() {

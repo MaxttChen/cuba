@@ -14,24 +14,24 @@
  * limitations under the License.
  */
 
-package com.haulmont.cuba.security.auth;
+package com.haulmont.cuba.security.auth.checks;
 
-import java.util.Collections;
+import com.haulmont.cuba.core.global.Messages;
+import com.haulmont.cuba.security.auth.UserPermissionsChecker;
+
 import java.util.Locale;
-import java.util.Map;
 
-public class AnonymousUserCredentials extends AbstractCredentials {
+public abstract class AbstractUserPermissionsChecker implements UserPermissionsChecker {
 
-    private static final long serialVersionUID = 3137392403475947L;
+    protected static final String MSG_PACK = "com.haulmont.cuba.security";
 
-    public AnonymousUserCredentials() {
+    protected Messages messages;
+
+    public AbstractUserPermissionsChecker(Messages messages) {
+        this.messages = messages;
     }
 
-    public AnonymousUserCredentials(Locale locale) {
-        super(locale, Collections.emptyMap());
-    }
-
-    public AnonymousUserCredentials(Locale locale, Map<String, Object> params) {
-        super(locale, params);
+    protected String getInvalidCredentialsMessage(String login, Locale locale) {
+        return messages.formatMessage(MSG_PACK, "LoginException.InvalidLoginOrPassword", locale, login);
     }
 }

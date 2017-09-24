@@ -60,7 +60,7 @@ public class LoginServiceBean implements LoginService {
     @Override
     public UserSession login(String login, String password, Locale locale, Map<String, Object> params) throws LoginException {
         LoginPasswordCredentials credentials = new LoginPasswordCredentials(login, password, locale, params);
-        return authenticationService.login(credentials);
+        return authenticationService.login(credentials).getSession();
     }
 
     @Override
@@ -71,7 +71,7 @@ public class LoginServiceBean implements LoginService {
     @Override
     public UserSession loginTrusted(String login, String password, Locale locale, Map<String, Object> params) throws LoginException {
         TrustedClientCredentials credentials = new TrustedClientCredentials(login, password, locale, params);
-        return authenticationService.login(credentials);
+        return authenticationService.login(credentials).getSession();
     }
 
     @Override
@@ -83,7 +83,7 @@ public class LoginServiceBean implements LoginService {
     public UserSession loginByRememberMe(String login, String rememberMeToken, Locale locale, Map<String, Object> params)
             throws LoginException {
         RememberMeCredentials credentials = new RememberMeCredentials(login, rememberMeToken, locale, params);
-        return authenticationService.login(credentials);
+        return authenticationService.login(credentials).getSession();
     }
 
     @Override

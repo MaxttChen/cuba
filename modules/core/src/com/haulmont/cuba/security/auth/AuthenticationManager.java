@@ -30,7 +30,7 @@ public interface AuthenticationManager {
      * @return
      * @throws LoginException
      */
-    UserSession login(Credentials credentials) throws LoginException;
+    UserSessionDetails login(Credentials credentials) throws LoginException;
 
     /**
      * todo JavaDoc!
@@ -39,7 +39,7 @@ public interface AuthenticationManager {
      * @return
      * @throws LoginException
      */
-    UserDetails authenticate(Credentials credentials) throws LoginException;
+    UserSessionDetails authenticate(Credentials credentials) throws LoginException;
 
     /**
      * todo JavaDoc!

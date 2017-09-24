@@ -14,28 +14,36 @@
  * limitations under the License.
  */
 
-package com.haulmont.cuba.security.auth.constraint;
+package com.haulmont.cuba.security.auth.checks;
 
 import com.haulmont.cuba.core.global.ClientType;
+import com.haulmont.cuba.core.global.Messages;
 import com.haulmont.cuba.security.auth.AbstractClientCredentials;
 import com.haulmont.cuba.security.auth.Credentials;
-import com.haulmont.cuba.security.auth.LoginConstraint;
-import com.haulmont.cuba.security.auth.UserDetails;
+import com.haulmont.cuba.security.auth.UserSessionDetails;
 import com.haulmont.cuba.security.global.LoginException;
-import com.haulmont.cuba.security.global.UserSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-@Component("cuba_ClientLoginConstraint")
-public class ClientTypeLoginConstraint implements LoginConstraint {
+import javax.inject.Inject;
+import java.util.Locale;
 
-    private final Logger log = LoggerFactory.getLogger(ClientTypeLoginConstraint.class);
+@Component("cuba_ClientLoginConstraint")
+public class ClientTypeUserPermissionsChecker extends AbstractUserPermissionsChecker {
+
+    private final Logger log = LoggerFactory.getLogger(ClientTypeUserPermissionsChecker.class);
+
+    @Inject
+    protected Messages messages;
+
+    @Inject
+    public ClientTypeUserPermissionsChecker(Messages messages) {
+        super(messages);
+    }
 
     @Override
-    public void checkLoginPermitted(Credentials credentials, UserDetails userDetails, UserSession session)
-            throws LoginException {
-
+    public void check(Credentials credentials, UserSessionDetails userSessionDetails) throws LoginException {
         if (credentials instanceof AbstractClientCredentials) {
             AbstractClientCredentials clientCredentials = (AbstractClientCredentials) credentials;
 
@@ -43,11 +51,18 @@ public class ClientTypeLoginConstraint implements LoginConstraint {
                 ClientType clientType = clientCredentials.getClientType();
 
                 if (ClientType.DESKTOP == clientType || ClientType.WEB == clientType) {
-                    if (!session.isSpecificPermitted("cuba.gui.loginToClient")) {
+                    if (!userSessionDetails.getSession().isSpecificPermitted("cuba.gui.loginToClient")) {
                         log.warn("Attempt of login to {} for user '{}' without cuba.gui.loginToClient permission",
                                 clientType, clientCredentials);
 
-//                        throw new LoginException(getInvalidCredentialsMessage(login, userLocale));
+                        Locale userLocale;
+                        if (clientCredentials.getLocale() != null) {
+                            userLocale = clientCredentials.getLocale();
+                        } else {
+                            userLocale = messages.getTools().getDefaultLocale();
+                        }
+
+                        throw new LoginException(getInvalidCredentialsMessage(clientCredentials.getUserIdentifier(), userLocale));
                     }
                 }
             }

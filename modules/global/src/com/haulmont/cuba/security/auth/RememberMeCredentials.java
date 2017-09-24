@@ -21,6 +21,9 @@ import java.util.Locale;
 import java.util.Map;
 
 public class RememberMeCredentials extends AbstractClientCredentials {
+
+    private static final long serialVersionUID = -8040672847169347648L;
+
     private String login;
     private String rememberMeToken;
 
@@ -55,6 +58,11 @@ public class RememberMeCredentials extends AbstractClientCredentials {
 
     public void setLogin(String login) {
         this.login = login;
+    }
+
+    @Override
+    public String getUserIdentifier() {
+        return getLogin();
     }
 
     @Override

@@ -18,10 +18,10 @@ package com.haulmont.cuba.security.auth;
 
 import com.haulmont.cuba.core.Persistence;
 import com.haulmont.cuba.core.global.Messages;
-import com.haulmont.cuba.core.global.PasswordEncryption;
 import com.haulmont.cuba.security.entity.User;
 import com.haulmont.cuba.security.global.LoginException;
 import com.haulmont.cuba.security.global.UserSession;
+import com.haulmont.cuba.security.sys.TrustedLoginHandler;
 import com.haulmont.cuba.security.sys.UserSessionManager;
 import org.springframework.stereotype.Component;
 
@@ -29,45 +29,45 @@ import javax.inject.Inject;
 import java.util.List;
 import java.util.Locale;
 
-@Component("cuba_LoginPasswordAuthenticationProvider")
-public class LoginPasswordAuthenticationProvider extends AbstractAuthenticationProvider {
+@Component("cuba_TrustedClientAuthenticationProvider")
+public class TrustedClientAuthenticationProvider extends AbstractAuthenticationProvider {
     @Inject
     protected List<UserPermissionsChecker> userPermissionsCheckers;
     @Inject
     protected UserSessionManager userSessionManager;
     @Inject
-    protected PasswordEncryption passwordEncryption;
+    protected TrustedLoginHandler trustedLoginHandler;
 
     @Inject
-    public LoginPasswordAuthenticationProvider(Persistence persistence, Messages messages) {
+    public TrustedClientAuthenticationProvider(Persistence persistence, Messages messages) {
         super(persistence, messages);
     }
 
     @Override
     public UserSessionDetails authenticate(Credentials credentials) throws LoginException {
-        LoginPasswordCredentials loginAndPassword = (LoginPasswordCredentials) credentials;
+        TrustedClientCredentials trustedClient = (TrustedClientCredentials) credentials;
 
-        String login = loginAndPassword.getLogin();
+        String login = trustedClient.getLogin();
 
-        Locale credentialsLocale = loginAndPassword.getLocale() == null ?
-                messages.getTools().getDefaultLocale() : loginAndPassword.getLocale();
+        Locale credentialsLocale = trustedClient.getLocale() == null ?
+                messages.getTools().getDefaultLocale() : trustedClient.getLocale();
 
         User user = loadUser(login);
         if (user == null) {
             throw new LoginException(getInvalidCredentialsMessage(login, credentialsLocale));
         }
 
-        if (!passwordEncryption.checkPassword(user, loginAndPassword.getPassword())) {
+        if (!trustedLoginHandler.checkPassword(trustedClient.getTrustedClientPassword())) {
             throw new LoginException(getInvalidCredentialsMessage(login, credentialsLocale));
         }
 
-        Locale userLocale = getUserLocale(loginAndPassword, user);
+        Locale userLocale = getUserLocale(trustedClient, user);
 
         UserSession session = userSessionManager.createSession(user, userLocale, false);
 
         UserSessionDetails userSessionDetails = new SimpleUserSessionDetails(session);
 
-        checkUserDetails(loginAndPassword, userSessionDetails);
+        checkUserDetails(trustedClient, userSessionDetails);
 
         return userSessionDetails;
     }
@@ -83,6 +83,6 @@ public class LoginPasswordAuthenticationProvider extends AbstractAuthenticationP
 
     @Override
     public boolean supports(Class<?> credentialsClass) {
-        return LoginPasswordCredentials.class.isAssignableFrom(credentialsClass);
+        return TrustedClientCredentials.class.isAssignableFrom(credentialsClass);
     }
 }

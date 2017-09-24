@@ -14,26 +14,25 @@
  * limitations under the License.
  */
 
-package com.haulmont.cuba.security.auth.events;
+package com.haulmont.cuba.security.auth.checks;
 
+import com.haulmont.cuba.core.global.Messages;
 import com.haulmont.cuba.security.auth.Credentials;
 import com.haulmont.cuba.security.auth.UserSessionDetails;
-import org.springframework.context.ApplicationEvent;
+import com.haulmont.cuba.security.global.LoginException;
+import org.springframework.stereotype.Component;
 
-public class AuthenticationSuccessEvent extends ApplicationEvent {
-    private final UserSessionDetails userSessionDetails;
+import javax.inject.Inject;
 
-    public AuthenticationSuccessEvent(Credentials source, UserSessionDetails userSessionDetails) {
-        super(source);
-        this.userSessionDetails = userSessionDetails;
+@Component("cuba_BruteForceLoginConstraint")
+public class BruteForceUserPermissionsChecker extends AbstractUserPermissionsChecker {
+    @Inject
+    public BruteForceUserPermissionsChecker(Messages messages) {
+        super(messages);
     }
 
     @Override
-    public Credentials getSource() {
-        return (Credentials) super.getSource();
-    }
-
-    public UserSessionDetails getUserSessionDetails() {
-        return userSessionDetails;
+    public void check(Credentials credentials, UserSessionDetails userSessionDetails) throws LoginException {
+        // todo
     }
 }

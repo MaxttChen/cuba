@@ -14,23 +14,13 @@
  * limitations under the License.
  */
 
-package com.haulmont.cuba.security.auth.events;
+package com.haulmont.cuba.security.auth;
 
 import com.haulmont.cuba.security.global.UserSession;
-import org.springframework.context.ApplicationEvent;
 
-public class UserLoggedOutEvent extends ApplicationEvent {
+import java.io.Serializable;
 
-    public UserLoggedOutEvent(UserSession source) {
-        super(source);
-    }
-
-    @Override
-    public UserSession getSource() {
-        return (UserSession) super.getSource();
-    }
-
-    public UserSession getUserSession() {
-        return (UserSession) super.getSource();
-    }
+// todo JavaDoc
+public interface UserSessionDetails extends Serializable {
+    UserSession getSession();
 }

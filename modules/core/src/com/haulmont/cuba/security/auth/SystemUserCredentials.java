@@ -21,6 +21,9 @@ import java.util.Locale;
 import java.util.Map;
 
 public class SystemUserCredentials extends AbstractCredentials {
+
+    private static final long serialVersionUID = 326392946916254748L;
+
     private String login;
 
     public SystemUserCredentials() {

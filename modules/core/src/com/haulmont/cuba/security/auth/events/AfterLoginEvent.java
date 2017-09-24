@@ -14,11 +14,27 @@
  * limitations under the License.
  */
 
-package com.haulmont.cuba.security.auth;
+package com.haulmont.cuba.security.auth.events;
 
-import com.haulmont.cuba.security.global.LoginException;
+import com.haulmont.cuba.security.auth.Credentials;
 import com.haulmont.cuba.security.global.UserSession;
+import org.springframework.context.ApplicationEvent;
 
-public interface LoginConstraint {
-    void checkLoginPermitted(Credentials credentials, UserDetails userDetails, UserSession session) throws LoginException;
+public class AfterLoginEvent extends ApplicationEvent {
+
+    private final UserSession userSession;
+
+    public AfterLoginEvent(Credentials source, UserSession userSession) {
+        super(source);
+        this.userSession = userSession;
+    }
+
+    @Override
+    public Credentials getSource() {
+        return (Credentials) super.getSource();
+    }
+
+    public UserSession getUserSession() {
+        return userSession;
+    }
 }

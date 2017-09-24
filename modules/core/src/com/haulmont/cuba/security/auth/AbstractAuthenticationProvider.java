@@ -19,28 +19,36 @@ package com.haulmont.cuba.security.auth;
 import com.haulmont.cuba.core.EntityManager;
 import com.haulmont.cuba.core.Persistence;
 import com.haulmont.cuba.core.Query;
+import com.haulmont.cuba.core.global.Messages;
 import com.haulmont.cuba.security.entity.User;
 import com.haulmont.cuba.security.global.LoginException;
+import org.apache.commons.lang.LocaleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.util.List;
+import java.util.Locale;
 
 public abstract class AbstractAuthenticationProvider implements AuthenticationProvider {
 
     private final Logger log = LoggerFactory.getLogger(AbstractAuthenticationProvider.class);
 
-    protected Persistence persistence;
+    protected static final String MSG_PACK = "com.haulmont.cuba.security";
 
-    public AbstractAuthenticationProvider(Persistence persistence) {
+    protected Persistence persistence;
+    protected Messages messages;
+
+    public AbstractAuthenticationProvider(Persistence persistence, Messages messages) {
         this.persistence = persistence;
+        this.messages = messages;
     }
 
     @Nullable
     protected User loadUser(String login) throws LoginException {
-        if (login == null)
+        if (login == null) {
             throw new IllegalArgumentException("Login is null");
+        }
 
         EntityManager em = persistence.getEntityManager();
         String queryStr = "select u from sec$User u where u.loginLowerCase = ?1 and (u.active = true or u.active is null)";
@@ -57,5 +65,25 @@ public abstract class AbstractAuthenticationProvider implements AuthenticationPr
             User user = (User) list.get(0);
             return user;
         }
+    }
+
+    protected String getInvalidCredentialsMessage(String login, Locale locale) {
+        return messages.formatMessage(MSG_PACK, "LoginException.InvalidLoginOrPassword", locale, login);
+    }
+
+    protected Locale getUserLocale(LocalizedCredentials credentials, User user) {
+        Locale userLocale = null;
+        if (credentials.isOverrideLocale()) {
+            userLocale = credentials.getLocale();
+        }
+        if (userLocale == null) {
+            if (user.getLanguage() != null) {
+                userLocale = LocaleUtils.toLocale(user.getLanguage());
+            } else {
+                userLocale = messages.getTools().getDefaultLocale();
+            }
+        }
+
+        return userLocale;
     }
 }

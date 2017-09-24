@@ -21,6 +21,8 @@ import java.util.Map;
 
 public class TrustedClientCredentials extends AbstractClientCredentials {
 
+    private static final long serialVersionUID = -2005955029379343063L;
+
     private String login;
     private String trustedClientPassword;
 
@@ -53,6 +55,11 @@ public class TrustedClientCredentials extends AbstractClientCredentials {
 
     public void setLogin(String login) {
         this.login = login;
+    }
+
+    @Override
+    public String getUserIdentifier() {
+        return getLogin();
     }
 
     @Override

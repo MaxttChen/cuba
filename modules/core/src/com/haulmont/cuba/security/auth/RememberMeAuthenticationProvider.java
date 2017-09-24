@@ -16,25 +16,87 @@
 
 package com.haulmont.cuba.security.auth;
 
+import com.haulmont.cuba.core.EntityManager;
 import com.haulmont.cuba.core.Persistence;
+import com.haulmont.cuba.core.TypedQuery;
+import com.haulmont.cuba.core.global.Messages;
+import com.haulmont.cuba.security.entity.RememberMeToken;
+import com.haulmont.cuba.security.entity.User;
 import com.haulmont.cuba.security.global.LoginException;
+import com.haulmont.cuba.security.global.UserSession;
+import com.haulmont.cuba.security.sys.UserSessionManager;
+import org.springframework.stereotype.Component;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
+import java.util.List;
+import java.util.Locale;
 
+@Component("cuba_RememberMeAuthenticationProvider")
 public class RememberMeAuthenticationProvider extends AbstractAuthenticationProvider {
+    @Inject
+    protected List<UserPermissionsChecker> userPermissionsCheckers;
+    @Inject
+    protected UserSessionManager userSessionManager;
 
     @Inject
-    public RememberMeAuthenticationProvider(Persistence persistence) {
-        super(persistence);
+    public RememberMeAuthenticationProvider(Persistence persistence, Messages messages) {
+        super(persistence, messages);
     }
 
     @Override
-    public UserDetails authenticate(Credentials credentials) throws LoginException {
-        return null;
+    public UserSessionDetails authenticate(Credentials credentials) throws LoginException {
+        RememberMeCredentials rememberMe = (RememberMeCredentials) credentials;
+
+        String login = rememberMe.getLogin();
+
+        Locale credentialsLocale = rememberMe.getLocale() == null ?
+                messages.getTools().getDefaultLocale() : rememberMe.getLocale();
+
+        User user = loadUser(login);
+        if (user == null) {
+            throw new LoginException(getInvalidCredentialsMessage(login, credentialsLocale));
+        }
+
+        RememberMeToken loginToken = loadRememberMeToken(user, rememberMe.getRememberMeToken());
+        if (loginToken == null) {
+            throw new LoginException(getInvalidCredentialsMessage(login, credentialsLocale));
+        }
+
+        Locale userLocale = getUserLocale(rememberMe, user);
+
+        UserSession session = userSessionManager.createSession(user, userLocale, false);
+
+        UserSessionDetails userSessionDetails = new SimpleUserSessionDetails(session);
+
+        checkUserDetails(rememberMe, userSessionDetails);
+
+        return userSessionDetails;
+    }
+
+    protected void checkUserDetails(Credentials loginAndPassword, UserSessionDetails userSessionDetails)
+            throws LoginException {
+        if (userPermissionsCheckers != null) {
+            for (UserPermissionsChecker checker : userPermissionsCheckers) {
+                checker.check(loginAndPassword, userSessionDetails);
+            }
+        }
+    }
+
+    @Nullable
+    protected RememberMeToken loadRememberMeToken(User user, String rememberMeToken) {
+        EntityManager em = persistence.getEntityManager();
+        TypedQuery<RememberMeToken> query = em.createQuery(
+                "select rt from sec$RememberMeToken rt where rt.token = :token and rt.user.id = :userId",
+                RememberMeToken.class);
+        query.setParameter("token", rememberMeToken);
+        query.setParameter("userId", user.getId());
+
+        return query.getFirstResult();
     }
 
     @Override
     public boolean supports(Class<?> credentialsClass) {
-        return false;
+        return RememberMeCredentials.class.isAssignableFrom(credentialsClass);
     }
 }

@@ -14,23 +14,19 @@
  * limitations under the License.
  */
 
-package com.haulmont.cuba.security.auth.events;
+package com.haulmont.cuba.security.auth;
 
 import com.haulmont.cuba.security.global.UserSession;
-import org.springframework.context.ApplicationEvent;
 
-public class UserLoggedOutEvent extends ApplicationEvent {
+public class SimpleUserSessionDetails implements UserSessionDetails {
+    private UserSession userSession;
 
-    public UserLoggedOutEvent(UserSession source) {
-        super(source);
+    public SimpleUserSessionDetails(UserSession userSession) {
+        this.userSession = userSession;
     }
 
     @Override
-    public UserSession getSource() {
-        return (UserSession) super.getSource();
-    }
-
-    public UserSession getUserSession() {
-        return (UserSession) super.getSource();
+    public UserSession getSession() {
+        return userSession;
     }
 }

@@ -30,7 +30,7 @@ public interface AuthenticationService {
      * @return
      * @throws LoginException
      */
-    UserSession login(Credentials credentials) throws LoginException;
+    UserSessionDetails login(Credentials credentials) throws LoginException;
 
     /**
      * todo JavaDoc!
@@ -39,7 +39,7 @@ public interface AuthenticationService {
      * @return
      * @throws LoginException
      */
-    UserDetails authenticate(Credentials credentials) throws LoginException;
+    UserSessionDetails authenticate(Credentials credentials) throws LoginException;
 
     /**
      * Log out and destroy an active user session.

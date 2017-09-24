@@ -18,15 +18,18 @@ package com.haulmont.cuba.security.auth.events;
 
 import com.haulmont.cuba.security.auth.AuthenticationProvider;
 import com.haulmont.cuba.security.auth.Credentials;
+import com.haulmont.cuba.security.global.LoginException;
 import org.springframework.context.ApplicationEvent;
 
 public class AuthenticationFailureEvent extends ApplicationEvent {
 
     private final AuthenticationProvider provider;
+    private final LoginException exception;
 
-    public AuthenticationFailureEvent(Credentials credentials, AuthenticationProvider provider) {
+    public AuthenticationFailureEvent(Credentials credentials, AuthenticationProvider provider, LoginException exception) {
         super(credentials);
         this.provider = provider;
+        this.exception = exception;
     }
 
     @Override
@@ -34,7 +37,15 @@ public class AuthenticationFailureEvent extends ApplicationEvent {
         return (Credentials) super.getSource();
     }
 
+    public Credentials getCredentials() {
+        return (Credentials) super.getSource();
+    }
+
     public AuthenticationProvider getProvider() {
         return provider;
+    }
+
+    public LoginException getException() {
+        return exception;
     }
 }
