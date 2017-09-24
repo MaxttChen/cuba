@@ -34,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.persistence.NoResultException;
 import java.util.List;
@@ -58,6 +59,7 @@ public class AuthenticationManagerBean implements AuthenticationManager {
     protected List<AuthenticationProvider> authenticationProviders;
 
     @Override
+    @Nonnull
     public UserSessionDetails login(Credentials credentials) throws LoginException {
         UserSessionDetails userSessionDetails = null;
 
@@ -96,6 +98,7 @@ public class AuthenticationManagerBean implements AuthenticationManager {
     }
 
     @Override
+    @Nonnull
     public UserSessionDetails authenticate(Credentials credentials) throws LoginException {
         try (Transaction tx = persistence.getTransaction()) {
             UserSessionDetails userSessionDetails = authenticateInternal(credentials);

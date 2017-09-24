@@ -20,6 +20,8 @@ import com.haulmont.cuba.security.entity.User;
 import com.haulmont.cuba.security.global.LoginException;
 import com.haulmont.cuba.security.global.UserSession;
 
+import javax.annotation.Nonnull;
+
 public interface AuthenticationManager {
     String NAME = "cuba_AuthenticationManager";
 
@@ -30,6 +32,7 @@ public interface AuthenticationManager {
      * @return
      * @throws LoginException
      */
+    @Nonnull
     UserSessionDetails login(Credentials credentials) throws LoginException;
 
     /**
@@ -39,6 +42,7 @@ public interface AuthenticationManager {
      * @return
      * @throws LoginException
      */
+    @Nonnull
     UserSessionDetails authenticate(Credentials credentials) throws LoginException;
 
     /**

@@ -14,14 +14,18 @@
  * limitations under the License.
  */
 
-package com.haulmont.cuba.security.auth;
+package com.haulmont.cuba.security.auth.providers;
 
 import com.haulmont.cuba.core.EntityManager;
 import com.haulmont.cuba.core.Persistence;
 import com.haulmont.cuba.core.Query;
 import com.haulmont.cuba.core.global.Messages;
+import com.haulmont.cuba.security.auth.AbstractClientCredentials;
+import com.haulmont.cuba.security.auth.AuthenticationProvider;
+import com.haulmont.cuba.security.auth.LocalizedCredentials;
 import com.haulmont.cuba.security.entity.User;
 import com.haulmont.cuba.security.global.LoginException;
+import com.haulmont.cuba.security.global.UserSession;
 import org.apache.commons.lang.LocaleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,10 +84,15 @@ public abstract class AbstractAuthenticationProvider implements AuthenticationPr
             if (user.getLanguage() != null) {
                 userLocale = LocaleUtils.toLocale(user.getLanguage());
             } else {
-                userLocale = messages.getTools().getDefaultLocale();
+                userLocale = messages.getTools().trimLocale(messages.getTools().getDefaultLocale());
             }
         }
 
         return userLocale;
+    }
+
+    protected void setClientSessionParams(AbstractClientCredentials clientCredentials, UserSession userSession) {
+        userSession.setClientInfo(clientCredentials.getClientInfo());
+        userSession.setAddress(clientCredentials.getIpAddress());
     }
 }

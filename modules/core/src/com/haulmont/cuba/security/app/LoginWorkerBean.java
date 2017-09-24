@@ -23,10 +23,12 @@ import com.haulmont.cuba.core.global.*;
 import com.haulmont.cuba.core.sys.AppContext;
 import com.haulmont.cuba.core.sys.SecurityContext;
 import com.haulmont.cuba.core.sys.remoting.RemoteClientInfo;
+import com.haulmont.cuba.security.auth.AnonymousSessionHolder;
+import com.haulmont.cuba.security.auth.AuthenticationManager;
+import com.haulmont.cuba.security.auth.SystemUserCredentials;
 import com.haulmont.cuba.security.entity.RememberMeToken;
 import com.haulmont.cuba.security.entity.User;
 import com.haulmont.cuba.security.global.LoginException;
-import com.haulmont.cuba.security.global.NoUserSessionException;
 import com.haulmont.cuba.security.global.SessionParams;
 import com.haulmont.cuba.security.global.UserSession;
 import com.haulmont.cuba.security.sys.TrustedLoginHandler;
@@ -35,13 +37,10 @@ import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.LocaleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Nullable;
-import javax.annotation.PostConstruct;
 import javax.inject.Inject;
-import javax.persistence.NoResultException;
 import java.util.*;
 
 /**
@@ -51,7 +50,7 @@ import java.util.*;
  */
 @Component(LoginWorker.NAME)
 @Deprecated
-public class LoginWorkerBean implements LoginWorker, AppContext.Listener, Ordered {
+public class LoginWorkerBean implements LoginWorker {
 
     private final Logger log = LoggerFactory.getLogger(LoginWorkerBean.class);
 
@@ -87,6 +86,12 @@ public class LoginWorkerBean implements LoginWorker, AppContext.Listener, Ordere
     // todo drop this cyclic dependency!
     @Inject
     protected Authentication authentication;
+
+    @Inject
+    protected AnonymousSessionHolder anonymousSessionHolder;
+
+    @Inject
+    protected AuthenticationManager authenticationManager;
 
     // todo move to authentication providers
     @Nullable
@@ -181,73 +186,16 @@ public class LoginWorkerBean implements LoginWorker, AppContext.Listener, Ordere
 
     @Override
     public UserSession loginSystem(String login) throws LoginException {
-        Locale locale = messages.getTools().trimLocale(messages.getTools().getDefaultLocale());
-
-        Transaction tx = persistence.createTransaction();
-        try {
-            User user = loadUser(login);
-            if (user == null) {
-                throw new LoginException(getInvalidCredentialsMessage(login, locale));
-            }
-
-            UserSession session = userSessionManager.createSession(user, locale, true);
-
-            tx.commit();
-
-            userSessionManager.clearPermissionsOnUser(session);
-            userSessionManager.storeSession(session);
-
-            log.info("Logged in: {}", session);
-
-            return session;
-        } finally {
-            tx.end();
-        }
+        return authenticationManager.login(new SystemUserCredentials(login)).getSession();
     }
 
     @Override
     public UserSession loginAnonymous() throws LoginException {
-        UUID anonymousSessionId = globalConfig.getAnonymousSessionId();
-
-        String anonymousLogin = serverConfig.getAnonymousLogin();
-
-        Locale locale = messages.getTools().trimLocale(messages.getTools().getDefaultLocale());
-
-        Transaction tx = persistence.createTransaction();
-        try {
-            User user = loadUser(anonymousLogin);
-            if (user == null) {
-                throw new LoginException(getInvalidCredentialsMessage(anonymousLogin, locale));
-            }
-
-            UserSession session = userSessionManager.createSession(anonymousSessionId, user, locale, true);
-            session.setClientInfo("System anonymous session");
-            tx.commit();
-
-            userSessionManager.clearPermissionsOnUser(session);
-            userSessionManager.storeSession(session);
-
-            log.info("Logged in: {}", session);
-
-            return session;
-        } finally {
-            tx.end();
-        }
+        return anonymousSessionHolder.getAnonymousSession();
     }
 
     @Override
     public UserSession getSystemSession(String trustedClientPassword) throws LoginException {
-        // todo move to LoginService
-        RemoteClientInfo remoteClientInfo = RemoteClientInfo.get();
-        if (remoteClientInfo != null) {
-            // reject request from not permitted client ip
-            if (!trustedLoginHandler.checkAddress(remoteClientInfo.getAddress())) {
-                log.warn("Attempt of trusted login from not permitted IP address: {}", remoteClientInfo.getAddress());
-                throw new LoginException(getInvalidCredentialsMessage(remoteClientInfo.getAddress(),
-                        messages.getTools().getDefaultLocale()));
-            }
-        }
-
         if (!trustedLoginHandler.checkPassword(trustedClientPassword)) {
             throw new LoginException(getInvalidCredentialsMessage(serverConfig.getJmxUserLogin(),
                     messages.getTools().getDefaultLocale()));
@@ -365,58 +313,12 @@ public class LoginWorkerBean implements LoginWorker, AppContext.Listener, Ordere
 
     @Override
     public void logout() {
-        try {
-            UserSession session = userSessionSource.getUserSession();
-            userSessionManager.removeSession(session);
-            log.info("Logged out: {}", session);
-        } catch (SecurityException e) {
-            log.warn("Couldn't logout: {}", e);
-        } catch (NoUserSessionException e) {
-            log.warn("NoUserSessionException thrown on logout");
-        }
+        authenticationManager.logout();
     }
 
     @Override
     public UserSession substituteUser(User substitutedUser) {
-        UserSession currentSession = userSessionSource.getUserSession();
-
-        Transaction tx = persistence.createTransaction();
-        try {
-            EntityManager em = persistence.getEntityManager();
-
-            User user;
-            if (currentSession.getUser().equals(substitutedUser)) {
-                user = em.find(User.class, substitutedUser.getId());
-                if (user == null)
-                    throw new NoResultException("User not found");
-            } else {
-                TypedQuery<User> query = em.createQuery(
-                        "select s.substitutedUser from sec$User u join u.substitutions s " +
-                        "where u.id = ?1 and s.substitutedUser.id = ?2",
-                        User.class
-                );
-                query.setParameter(1, currentSession.getUser());
-                query.setParameter(2, substitutedUser);
-                List<User> list = query.getResultList();
-                if (list.isEmpty())
-                    throw new NoResultException("User not found");
-                else
-                    user = list.get(0);
-            }
-
-            UserSession session = userSessionManager.createSession(currentSession, user);
-
-            tx.commit();
-
-            // todo move clear permissions / store to userSessionManager.createSession
-            userSessionManager.removeSession(currentSession);
-            userSessionManager.clearPermissionsOnUser(session);
-            userSessionManager.storeSession(session);
-
-            return session;
-        } finally {
-            tx.end();
-        }
+        return authenticationManager.substituteUser(substitutedUser);
     }
 
     @Override
@@ -426,6 +328,7 @@ public class LoginWorkerBean implements LoginWorker, AppContext.Listener, Ordere
 
     @Override
     public boolean checkRememberMe(String login, String rememberMeToken) {
+        // always return false, this feature is not supported any more
         return false;
     }
 
@@ -480,42 +383,10 @@ public class LoginWorkerBean implements LoginWorker, AppContext.Listener, Ordere
         }
     }
 
-    @PostConstruct
-    public void init() {
-        AppContext.addListener(this);
-    }
-
-    protected void initializeAnonymousSession() {
-        log.debug("Initialize anonymous session");
-
-        try {
-            UserSession session = loginAnonymous();
-
-            log.debug("Anonymous session initialized with id {}", session.getId());
-        } catch (LoginException e) {
-            log.error("Unable to login anonymous session", e);
-        }
-    }
-
-    // todo move to authentication providers
     protected void setSessionParams(UserSession userSession, Map<String, Object> params) {
         if (params != null) {
             userSession.setClientInfo((String)params.get(SessionParams.CLIENT_INFO.getId()));
             userSession.setAddress((String) params.get(SessionParams.IP_ADDERSS.getId()));
         }
-    }
-
-    @Override
-    public void applicationStarted() {
-        initializeAnonymousSession();
-    }
-
-    @Override
-    public void applicationStopped() {
-    }
-
-    @Override
-    public int getOrder() {
-        return LOWEST_PLATFORM_PRECEDENCE - 110;
     }
 }

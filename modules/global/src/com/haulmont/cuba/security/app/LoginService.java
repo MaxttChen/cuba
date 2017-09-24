@@ -80,8 +80,6 @@ public interface LoginService {
     @Deprecated
     UserSession getSystemSession(String trustedClientPassword) throws LoginException;
 
-    // TODO DEPRECATE METHODS BELOW
-
     /**
      * Log in using login and user's password.
      *

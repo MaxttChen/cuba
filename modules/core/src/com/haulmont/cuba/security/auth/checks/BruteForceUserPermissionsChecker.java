@@ -17,6 +17,7 @@
 package com.haulmont.cuba.security.auth.checks;
 
 import com.haulmont.cuba.core.global.Messages;
+import com.haulmont.cuba.security.app.BruteForceProtectionAPI;
 import com.haulmont.cuba.security.auth.Credentials;
 import com.haulmont.cuba.security.auth.UserSessionDetails;
 import com.haulmont.cuba.security.global.LoginException;
@@ -26,6 +27,10 @@ import javax.inject.Inject;
 
 @Component("cuba_BruteForceLoginConstraint")
 public class BruteForceUserPermissionsChecker extends AbstractUserPermissionsChecker {
+
+    @Inject
+    protected BruteForceProtectionAPI bruteForceProtectionAPI;
+
     @Inject
     public BruteForceUserPermissionsChecker(Messages messages) {
         super(messages);

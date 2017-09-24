@@ -14,60 +14,65 @@
  * limitations under the License.
  */
 
-package com.haulmont.cuba.security.auth;
+package com.haulmont.cuba.security.auth.providers;
 
+import com.haulmont.cuba.core.EntityManager;
 import com.haulmont.cuba.core.Persistence;
+import com.haulmont.cuba.core.TypedQuery;
 import com.haulmont.cuba.core.global.Messages;
-import com.haulmont.cuba.core.global.PasswordEncryption;
+import com.haulmont.cuba.security.auth.*;
+import com.haulmont.cuba.security.entity.RememberMeToken;
 import com.haulmont.cuba.security.entity.User;
 import com.haulmont.cuba.security.global.LoginException;
 import com.haulmont.cuba.security.global.UserSession;
 import com.haulmont.cuba.security.sys.UserSessionManager;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import java.util.List;
 import java.util.Locale;
 
-@Component("cuba_LoginPasswordAuthenticationProvider")
-public class LoginPasswordAuthenticationProvider extends AbstractAuthenticationProvider {
+@Component("cuba_RememberMeAuthenticationProvider")
+public class RememberMeAuthenticationProvider extends AbstractAuthenticationProvider {
     @Inject
     protected List<UserPermissionsChecker> userPermissionsCheckers;
     @Inject
     protected UserSessionManager userSessionManager;
-    @Inject
-    protected PasswordEncryption passwordEncryption;
 
     @Inject
-    public LoginPasswordAuthenticationProvider(Persistence persistence, Messages messages) {
+    public RememberMeAuthenticationProvider(Persistence persistence, Messages messages) {
         super(persistence, messages);
     }
 
     @Override
     public UserSessionDetails authenticate(Credentials credentials) throws LoginException {
-        LoginPasswordCredentials loginAndPassword = (LoginPasswordCredentials) credentials;
+        RememberMeCredentials rememberMe = (RememberMeCredentials) credentials;
 
-        String login = loginAndPassword.getLogin();
+        String login = rememberMe.getLogin();
 
-        Locale credentialsLocale = loginAndPassword.getLocale() == null ?
-                messages.getTools().getDefaultLocale() : loginAndPassword.getLocale();
+        Locale credentialsLocale = rememberMe.getLocale() == null ?
+                messages.getTools().getDefaultLocale() : rememberMe.getLocale();
 
         User user = loadUser(login);
         if (user == null) {
             throw new LoginException(getInvalidCredentialsMessage(login, credentialsLocale));
         }
 
-        if (!passwordEncryption.checkPassword(user, loginAndPassword.getPassword())) {
+        RememberMeToken loginToken = loadRememberMeToken(user, rememberMe.getRememberMeToken());
+        if (loginToken == null) {
             throw new LoginException(getInvalidCredentialsMessage(login, credentialsLocale));
         }
 
-        Locale userLocale = getUserLocale(loginAndPassword, user);
+        Locale userLocale = getUserLocale(rememberMe, user);
 
         UserSession session = userSessionManager.createSession(user, userLocale, false);
 
+        setClientSessionParams(rememberMe, session);
+
         UserSessionDetails userSessionDetails = new SimpleUserSessionDetails(session);
 
-        checkUserDetails(loginAndPassword, userSessionDetails);
+        checkUserDetails(rememberMe, userSessionDetails);
 
         return userSessionDetails;
     }
@@ -81,8 +86,20 @@ public class LoginPasswordAuthenticationProvider extends AbstractAuthenticationP
         }
     }
 
+    @Nullable
+    protected RememberMeToken loadRememberMeToken(User user, String rememberMeToken) {
+        EntityManager em = persistence.getEntityManager();
+        TypedQuery<RememberMeToken> query = em.createQuery(
+                "select rt from sec$RememberMeToken rt where rt.token = :token and rt.user.id = :userId",
+                RememberMeToken.class);
+        query.setParameter("token", rememberMeToken);
+        query.setParameter("userId", user.getId());
+
+        return query.getFirstResult();
+    }
+
     @Override
     public boolean supports(Class<?> credentialsClass) {
-        return LoginPasswordCredentials.class.isAssignableFrom(credentialsClass);
+        return RememberMeCredentials.class.isAssignableFrom(credentialsClass);
     }
 }

@@ -16,6 +16,7 @@
  */
 package com.haulmont.cuba.security.app;
 
+import com.haulmont.cuba.core.sys.remoting.RemoteClientInfo;
 import com.haulmont.cuba.security.auth.AuthenticationService;
 import com.haulmont.cuba.security.auth.LoginPasswordCredentials;
 import com.haulmont.cuba.security.auth.RememberMeCredentials;
@@ -71,6 +72,10 @@ public class LoginServiceBean implements LoginService {
     @Override
     public UserSession loginTrusted(String login, String password, Locale locale, Map<String, Object> params) throws LoginException {
         TrustedClientCredentials credentials = new TrustedClientCredentials(login, password, locale, params);
+        RemoteClientInfo remoteClientInfo = RemoteClientInfo.get();
+        if (remoteClientInfo != null) {
+            credentials.setIpAddress(remoteClientInfo.getAddress());
+        }
         return authenticationService.login(credentials).getSession();
     }
 
@@ -83,6 +88,7 @@ public class LoginServiceBean implements LoginService {
     public UserSession loginByRememberMe(String login, String rememberMeToken, Locale locale, Map<String, Object> params)
             throws LoginException {
         RememberMeCredentials credentials = new RememberMeCredentials(login, rememberMeToken, locale, params);
+        // todo copy ipAddress / client-type / sync session from params to credentials
         return authenticationService.login(credentials).getSession();
     }
 

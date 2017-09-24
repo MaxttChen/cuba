@@ -14,15 +14,18 @@
  * limitations under the License.
  */
 
-package com.haulmont.cuba.security.auth;
+package com.haulmont.cuba.security.auth.providers;
 
 import com.haulmont.cuba.core.Persistence;
 import com.haulmont.cuba.core.global.Messages;
+import com.haulmont.cuba.security.auth.*;
 import com.haulmont.cuba.security.entity.User;
 import com.haulmont.cuba.security.global.LoginException;
 import com.haulmont.cuba.security.global.UserSession;
 import com.haulmont.cuba.security.sys.TrustedLoginHandler;
 import com.haulmont.cuba.security.sys.UserSessionManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
@@ -31,6 +34,9 @@ import java.util.Locale;
 
 @Component("cuba_TrustedClientAuthenticationProvider")
 public class TrustedClientAuthenticationProvider extends AbstractAuthenticationProvider {
+
+    private final Logger log = LoggerFactory.getLogger(TrustedClientAuthenticationProvider.class);
+
     @Inject
     protected List<UserPermissionsChecker> userPermissionsCheckers;
     @Inject
@@ -57,6 +63,16 @@ public class TrustedClientAuthenticationProvider extends AbstractAuthenticationP
             throw new LoginException(getInvalidCredentialsMessage(login, credentialsLocale));
         }
 
+        if (trustedClient.getIpAddress() != null) {
+            // reject request from not permitted client ip
+            if (!trustedLoginHandler.checkAddress(trustedClient.getIpAddress())) {
+                log.warn("Attempt of trusted login from not permitted IP address: {} {}", login, trustedClient.getIpAddress());
+                throw new LoginException(getInvalidCredentialsMessage(login, credentialsLocale));
+            }
+        } else {
+            log.debug("Unable to check trusted client IP for user {}", trustedClient.getLogin());
+        }
+
         if (!trustedLoginHandler.checkPassword(trustedClient.getTrustedClientPassword())) {
             throw new LoginException(getInvalidCredentialsMessage(login, credentialsLocale));
         }
@@ -64,6 +80,8 @@ public class TrustedClientAuthenticationProvider extends AbstractAuthenticationP
         Locale userLocale = getUserLocale(trustedClient, user);
 
         UserSession session = userSessionManager.createSession(user, userLocale, false);
+
+        setClientSessionParams(trustedClient, session);
 
         UserSessionDetails userSessionDetails = new SimpleUserSessionDetails(session);
 
