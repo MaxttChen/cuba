@@ -498,6 +498,8 @@ public class ServerLogWindow extends AbstractWindow {
     protected void refreshAppenders(JmxRemoteLoggingAPI.LoggingHostInfo hostInfo) {
         List<String> appenders = hostInfo.getAppenders();
 
+        appenders.removeIf(Objects::isNull);
+
         Collections.sort(appenders);
         appenderNameField.setOptionsList(appenders);
 
