@@ -19,10 +19,9 @@ package com.haulmont.cuba.security.auth;
 import java.util.Locale;
 import java.util.Map;
 
-public abstract class AbstractCredentials implements LocalizedCredentials, SyncSessionCredentials {
+public abstract class AbstractCredentials implements LocalizedCredentials {
     private Locale locale;
     private boolean overrideLocale = true;
-    private boolean syncNewUserSessionReplication = false;
 
     private Map<String, Object> params;
 
@@ -58,14 +57,5 @@ public abstract class AbstractCredentials implements LocalizedCredentials, SyncS
 
     public void setOverrideLocale(boolean overrideLocale) {
         this.overrideLocale = overrideLocale;
-    }
-
-    @Override
-    public boolean isSyncNewUserSessionReplication() {
-        return syncNewUserSessionReplication;
-    }
-
-    public void setSyncNewUserSessionReplication(boolean syncNewUserSessionReplication) {
-        this.syncNewUserSessionReplication = syncNewUserSessionReplication;
     }
 }

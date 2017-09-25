@@ -174,8 +174,6 @@ public class AuthenticationManagerBean implements AuthenticationManager {
                     details = provider.authenticate(credentials);
 
                     if (details != null) {
-                        publishAfterAuthenticationEvent(credentials, details);
-
                         log.debug("Authentication successful for {}", credentials);
 
                         // publish auth success
@@ -185,7 +183,7 @@ public class AuthenticationManagerBean implements AuthenticationManager {
                     }
                 } catch (LoginException e) {
                     // publish auth fail
-                    publishAuthenticationFailed(provider, credentials, e);
+                    publishAuthenticationFailed(credentials, provider, e);
 
                     throw e;
                 }
@@ -261,7 +259,7 @@ public class AuthenticationManagerBean implements AuthenticationManager {
         }
     }
 
-    protected void publishAuthenticationFailed(AuthenticationProvider provider, Credentials credentials, LoginException e) {
+    protected void publishAuthenticationFailed(Credentials credentials, AuthenticationProvider provider, LoginException e) {
         events.publish(new AuthenticationFailureEvent(credentials, provider, e));
     }
 

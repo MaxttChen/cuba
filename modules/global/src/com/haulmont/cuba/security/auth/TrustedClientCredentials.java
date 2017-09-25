@@ -16,6 +16,7 @@
 
 package com.haulmont.cuba.security.auth;
 
+import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
 
@@ -26,11 +27,17 @@ public class TrustedClientCredentials extends AbstractClientCredentials {
     private String login;
     private String trustedClientPassword;
 
+    private String clientIpAddress;
+
     public TrustedClientCredentials() {
     }
 
     public TrustedClientCredentials(String trustedClientPassword) {
         this.trustedClientPassword = trustedClientPassword;
+    }
+
+    public TrustedClientCredentials(String login, String trustedClientPassword, Locale locale) {
+        this(login, trustedClientPassword, locale, Collections.emptyMap());
     }
 
     public TrustedClientCredentials(String login, String trustedClientPassword,
@@ -60,6 +67,14 @@ public class TrustedClientCredentials extends AbstractClientCredentials {
     @Override
     public String getUserIdentifier() {
         return getLogin();
+    }
+
+    public String getClientIpAddress() {
+        return clientIpAddress;
+    }
+
+    public void setClientIpAddress(String clientIpAddress) {
+        this.clientIpAddress = clientIpAddress;
     }
 
     @Override

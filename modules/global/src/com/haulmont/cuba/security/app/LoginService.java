@@ -58,6 +58,8 @@ public interface LoginService {
     /**
      * Get a UserSession from the cache of currently active sessions.
      *
+     * todo moved to TrustedClientService
+     *
      * @param sessionId the session id
      * @return a UserSession instance or null, if not found
      */
@@ -65,7 +67,6 @@ public interface LoginService {
     @Deprecated
     UserSession getSession(UUID sessionId);
 
-    // todo move to separate TrustedClientService methods below
     // todo deprecate these methods
 
     /**
@@ -177,6 +178,7 @@ public interface LoginService {
 
     /**
      * @return true if the brute-force protection is enabled
+     * @deprecated always returns false
      */
     @Deprecated
     boolean isBruteForceProtectionEnabled();

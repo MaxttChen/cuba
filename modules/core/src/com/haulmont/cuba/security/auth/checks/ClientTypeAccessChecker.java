@@ -24,21 +24,22 @@ import com.haulmont.cuba.security.auth.UserSessionDetails;
 import com.haulmont.cuba.security.global.LoginException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.util.Locale;
 
-@Component("cuba_ClientLoginConstraint")
-public class ClientTypeUserPermissionsChecker extends AbstractUserPermissionsChecker {
+@Component("cuba_ClientTypeAccessChecker")
+public class ClientTypeAccessChecker extends AbstractAccessChecker implements Ordered {
 
-    private final Logger log = LoggerFactory.getLogger(ClientTypeUserPermissionsChecker.class);
+    private final Logger log = LoggerFactory.getLogger(ClientTypeAccessChecker.class);
 
     @Inject
     protected Messages messages;
 
     @Inject
-    public ClientTypeUserPermissionsChecker(Messages messages) {
+    public ClientTypeAccessChecker(Messages messages) {
         super(messages);
     }
 
@@ -67,5 +68,10 @@ public class ClientTypeUserPermissionsChecker extends AbstractUserPermissionsChe
                 }
             }
         }
+    }
+
+    @Override
+    public int getOrder() {
+        return HIGHEST_PLATFORM_PRECEDENCE + 10;
     }
 }

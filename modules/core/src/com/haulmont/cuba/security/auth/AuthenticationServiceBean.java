@@ -25,12 +25,12 @@ import com.haulmont.cuba.security.global.UserSession;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.util.Collections;
 
-@Service(AuthenticationService.NAME)
+@Component(AuthenticationService.NAME)
 public class AuthenticationServiceBean implements AuthenticationService {
 
     private final Logger log = LoggerFactory.getLogger(AuthenticationServiceBean.class);

@@ -16,13 +16,13 @@
  */
 package com.haulmont.cuba.security.app;
 
+import com.haulmont.cuba.core.global.ClientType;
+import com.haulmont.cuba.core.global.GlobalConfig;
 import com.haulmont.cuba.core.sys.remoting.RemoteClientInfo;
-import com.haulmont.cuba.security.auth.AuthenticationService;
-import com.haulmont.cuba.security.auth.LoginPasswordCredentials;
-import com.haulmont.cuba.security.auth.RememberMeCredentials;
-import com.haulmont.cuba.security.auth.TrustedClientCredentials;
+import com.haulmont.cuba.security.auth.*;
 import com.haulmont.cuba.security.entity.User;
 import com.haulmont.cuba.security.global.LoginException;
+import com.haulmont.cuba.security.global.SessionParams;
 import com.haulmont.cuba.security.global.UserSession;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.slf4j.Logger;
@@ -38,8 +38,8 @@ import java.util.UUID;
 /**
  * Service to provide methods for user login/logout to the middleware.
  */
-@Component(LoginService.NAME)
 @Deprecated
+@Component(LoginService.NAME)
 public class LoginServiceBean implements LoginService {
 
     private final Logger log = LoggerFactory.getLogger(LoginServiceBean.class);
@@ -48,10 +48,16 @@ public class LoginServiceBean implements LoginService {
     protected AuthenticationService authenticationService;
 
     @Inject
+    protected TrustedClientService trustedClientService;
+
+    @Inject
     protected LoginWorker loginWorker;
 
     @Inject
     protected BruteForceProtectionAPI bruteForceProtectionAPI;
+
+    @Inject
+    protected GlobalConfig globalConfig;
 
     @Override
     public UserSession login(String login, String password, Locale locale) throws LoginException {
@@ -61,6 +67,7 @@ public class LoginServiceBean implements LoginService {
     @Override
     public UserSession login(String login, String password, Locale locale, Map<String, Object> params) throws LoginException {
         LoginPasswordCredentials credentials = new LoginPasswordCredentials(login, password, locale, params);
+        copyParamsToCredentials(params, credentials);
         return authenticationService.login(credentials).getSession();
     }
 
@@ -74,8 +81,9 @@ public class LoginServiceBean implements LoginService {
         TrustedClientCredentials credentials = new TrustedClientCredentials(login, password, locale, params);
         RemoteClientInfo remoteClientInfo = RemoteClientInfo.get();
         if (remoteClientInfo != null) {
-            credentials.setIpAddress(remoteClientInfo.getAddress());
+            credentials.setClientIpAddress(remoteClientInfo.getAddress());
         }
+        copyParamsToCredentials(params, credentials);
         return authenticationService.login(credentials).getSession();
     }
 
@@ -88,21 +96,25 @@ public class LoginServiceBean implements LoginService {
     public UserSession loginByRememberMe(String login, String rememberMeToken, Locale locale, Map<String, Object> params)
             throws LoginException {
         RememberMeCredentials credentials = new RememberMeCredentials(login, rememberMeToken, locale, params);
-        // todo copy ipAddress / client-type / sync session from params to credentials
+        copyParamsToCredentials(params, credentials);
         return authenticationService.login(credentials).getSession();
     }
 
     @Override
     public UserSession getSystemSession(String trustedClientPassword) throws LoginException {
         try {
-            // todo move to TrustedClientService
-            return loginWorker.getSystemSession(trustedClientPassword);
+            return trustedClientService.getSystemSession(trustedClientPassword);
         } catch (LoginException e) {
             log.info("Login failed: {}", e.toString());
             throw e;
         } catch (Throwable e) {
             log.error("Login error", e);
-            throw wrapInLoginException(e);
+            //noinspection ThrowableResultOfMethodCallIgnored
+            Throwable rootCause = ExceptionUtils.getRootCause(e);
+            if (rootCause == null)
+                rootCause = e;
+            // send text only to avoid ClassNotFoundException when the client has no dependency to some library
+            throw new LoginException(rootCause.toString());
         }
     }
 
@@ -127,18 +139,10 @@ public class LoginServiceBean implements LoginService {
         return false;
     }
 
-    protected LoginException wrapInLoginException(Throwable throwable) {
-        //noinspection ThrowableResultOfMethodCallIgnored
-        Throwable rootCause = ExceptionUtils.getRootCause(throwable);
-        if (rootCause == null)
-            rootCause = throwable;
-        // send text only to avoid ClassNotFoundException when the client has no dependency to some library
-        return new LoginException(rootCause.toString());
-    }
-
     @Override
     public boolean isBruteForceProtectionEnabled() {
-        return bruteForceProtectionAPI.isBruteForceProtectionEnabled();
+        // bruteForceProtectionEnabled is not accessible for clients any more
+        return false;
     }
 
     @Override
@@ -154,5 +158,29 @@ public class LoginServiceBean implements LoginService {
     @Override
     public int registerUnsuccessfulLogin(String login, String ipAddress) {
         return bruteForceProtectionAPI.registerUnsuccessfulLogin(login, ipAddress);
+    }
+
+    @Deprecated
+    protected void copyParamsToCredentials(Map<String, Object> params, AbstractClientCredentials credentials) {
+        // for compatibility only
+        Object clientType = params.get(ClientType.class.getName());
+        if (clientType != null) {
+            credentials.setClientType(ClientType.valueOf((String) clientType));
+        }
+        Object clientInfo = params.get(SessionParams.CLIENT_INFO.getId());
+        if (clientInfo != null) {
+            credentials.setClientInfo((String) clientInfo);
+        }
+        Object ipAddress = params.get(SessionParams.IP_ADDERSS.getId());
+        if (ipAddress != null) {
+            credentials.setIpAddress((String) ipAddress);
+        }
+        Object hostName = params.get(SessionParams.HOST_NAME.getId());
+        if (hostName != null) {
+            credentials.setHostName((String) hostName);
+        }
+        if (!globalConfig.getLocaleSelectVisible()) {
+            credentials.setOverrideLocale(false);
+        }
     }
 }

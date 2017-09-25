@@ -21,6 +21,16 @@ import com.haulmont.cuba.security.global.LoginException;
 import javax.annotation.Nullable;
 
 public interface AuthenticationProvider {
+    /**
+     * Defines the highest precedence for {@link org.springframework.core.Ordered} providers of the platform.
+     */
+    int HIGHEST_PLATFORM_PRECEDENCE = 100;
+
+    /**
+     * Defines the lowest precedence for {@link org.springframework.core.Ordered} providers of the platform.
+     */
+    int LOWEST_PLATFORM_PRECEDENCE = 1000;
+
     @Nullable
     UserSessionDetails authenticate(Credentials credentials) throws LoginException;
 

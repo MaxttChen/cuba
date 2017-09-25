@@ -26,6 +26,7 @@ import com.haulmont.cuba.security.entity.User;
 import com.haulmont.cuba.security.global.LoginException;
 import com.haulmont.cuba.security.global.UserSession;
 import com.haulmont.cuba.security.sys.UserSessionManager;
+import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Nullable;
@@ -34,9 +35,11 @@ import java.util.List;
 import java.util.Locale;
 
 @Component("cuba_RememberMeAuthenticationProvider")
-public class RememberMeAuthenticationProvider extends AbstractAuthenticationProvider {
+public class RememberMeAuthenticationProvider extends AbstractAuthenticationProvider implements Ordered {
     @Inject
-    protected List<UserPermissionsChecker> userPermissionsCheckers;
+    protected List<AccessChecker> accessCheckers;
+    @Inject
+    protected List<CredentialsChecker> credentialsCheckers;
     @Inject
     protected UserSessionManager userSessionManager;
 
@@ -47,6 +50,8 @@ public class RememberMeAuthenticationProvider extends AbstractAuthenticationProv
 
     @Override
     public UserSessionDetails authenticate(Credentials credentials) throws LoginException {
+        checkCredentials(credentials);
+
         RememberMeCredentials rememberMe = (RememberMeCredentials) credentials;
 
         String login = rememberMe.getLogin();
@@ -72,15 +77,23 @@ public class RememberMeAuthenticationProvider extends AbstractAuthenticationProv
 
         UserSessionDetails userSessionDetails = new SimpleUserSessionDetails(session);
 
-        checkUserDetails(rememberMe, userSessionDetails);
+        checkAccess(rememberMe, userSessionDetails);
 
         return userSessionDetails;
     }
 
-    protected void checkUserDetails(Credentials loginAndPassword, UserSessionDetails userSessionDetails)
+    protected void checkCredentials(Credentials credentials) throws LoginException {
+        if (credentialsCheckers != null) {
+            for (CredentialsChecker checker : credentialsCheckers) {
+                checker.check(credentials);
+            }
+        }
+    }
+
+    protected void checkAccess(Credentials loginAndPassword, UserSessionDetails userSessionDetails)
             throws LoginException {
-        if (userPermissionsCheckers != null) {
-            for (UserPermissionsChecker checker : userPermissionsCheckers) {
+        if (accessCheckers != null) {
+            for (AccessChecker checker : accessCheckers) {
                 checker.check(loginAndPassword, userSessionDetails);
             }
         }
@@ -101,5 +114,10 @@ public class RememberMeAuthenticationProvider extends AbstractAuthenticationProv
     @Override
     public boolean supports(Class<?> credentialsClass) {
         return RememberMeCredentials.class.isAssignableFrom(credentialsClass);
+    }
+
+    @Override
+    public int getOrder() {
+        return HIGHEST_PLATFORM_PRECEDENCE + 20;
     }
 }

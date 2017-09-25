@@ -17,10 +17,12 @@
 package com.haulmont.cuba.security.auth.providers;
 
 import com.haulmont.cuba.core.Persistence;
+import com.haulmont.cuba.core.app.ServerConfig;
+import com.haulmont.cuba.core.global.GlobalConfig;
 import com.haulmont.cuba.core.global.Messages;
+import com.haulmont.cuba.security.auth.AnonymousUserCredentials;
 import com.haulmont.cuba.security.auth.Credentials;
 import com.haulmont.cuba.security.auth.SimpleUserSessionDetails;
-import com.haulmont.cuba.security.auth.SystemUserCredentials;
 import com.haulmont.cuba.security.auth.UserSessionDetails;
 import com.haulmont.cuba.security.entity.User;
 import com.haulmont.cuba.security.global.LoginException;
@@ -31,45 +33,53 @@ import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.util.Locale;
+import java.util.UUID;
 
-@Component("cuba_SystemAuthenticationProvider")
-public class SystemAuthenticationProvider extends AbstractAuthenticationProvider implements Ordered {
+@Component("cuba_AnonymousAuthenticationProvider")
+public class AnonymousAuthenticationProvider extends AbstractAuthenticationProvider implements Ordered {
     @Inject
     protected UserSessionManager userSessionManager;
+    @Inject
+    protected ServerConfig serverConfig;
+    @Inject
+    protected GlobalConfig globalConfig;
 
     @Inject
-    public SystemAuthenticationProvider(Persistence persistence, Messages messages) {
+    public AnonymousAuthenticationProvider(Persistence persistence, Messages messages) {
         super(persistence, messages);
     }
 
     @Override
     public UserSessionDetails authenticate(Credentials credentials) throws LoginException {
-        SystemUserCredentials systemLogin = (SystemUserCredentials) credentials;
+        AnonymousUserCredentials anonymous = (AnonymousUserCredentials) credentials;
 
-        String login = systemLogin.getLogin();
+        String login = serverConfig.getAnonymousLogin();
 
-        Locale credentialsLocale = systemLogin.getLocale() == null ?
-                messages.getTools().getDefaultLocale() : systemLogin.getLocale();
+        Locale credentialsLocale = anonymous.getLocale() == null ?
+                messages.getTools().trimLocale(messages.getTools().getDefaultLocale()) : anonymous.getLocale();
 
         User user = loadUser(login);
         if (user == null) {
             throw new LoginException(getInvalidCredentialsMessage(login, credentialsLocale));
         }
 
-        Locale userLocale = getUserLocale(systemLogin, user);
+        Locale userLocale = getUserLocale(anonymous, user);
 
-        UserSession session = userSessionManager.createSession(user, userLocale, true);
+        UUID anonymousSessionId = globalConfig.getAnonymousSessionId();
+
+        UserSession session = userSessionManager.createSession(anonymousSessionId, user, userLocale, true);
+        session.setClientInfo("System anonymous session");
 
         return new SimpleUserSessionDetails(session);
     }
 
     @Override
     public boolean supports(Class<?> credentialsClass) {
-        return SystemUserCredentials.class.isAssignableFrom(credentialsClass);
+        return AnonymousUserCredentials.class.isAssignableFrom(credentialsClass);
     }
 
     @Override
     public int getOrder() {
-        return HIGHEST_PLATFORM_PRECEDENCE + 40;
+        return HIGHEST_PLATFORM_PRECEDENCE + 50;
     }
 }

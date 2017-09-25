@@ -25,17 +25,18 @@ import com.haulmont.cuba.security.global.LoginException;
 import com.haulmont.cuba.security.global.UserSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 
-@Component("cuba_IpMaskLoginConstraint")
-public class IpMaskUserPermissionsChecker extends AbstractUserPermissionsChecker {
+@Component("cuba_IpMaskAccessChecker")
+public class IpMaskAccessChecker extends AbstractAccessChecker implements Ordered {
 
-    private final Logger log = LoggerFactory.getLogger(IpMaskUserPermissionsChecker.class);
+    private final Logger log = LoggerFactory.getLogger(IpMaskAccessChecker.class);
 
     @Inject
-    public IpMaskUserPermissionsChecker(Messages messages) {
+    public IpMaskAccessChecker(Messages messages) {
         super(messages);
     }
 
@@ -44,18 +45,25 @@ public class IpMaskUserPermissionsChecker extends AbstractUserPermissionsChecker
         if (credentials instanceof AbstractClientCredentials) {
             AbstractClientCredentials clientCredentials = (AbstractClientCredentials) credentials;
 
-            if (clientCredentials.isCheckClientPermissions()) {
+            if (clientCredentials.isCheckClientPermissions()
+                    && clientCredentials.getIpAddress() != null) {
                 String ipAddress = clientCredentials.getIpAddress();
 
                 UserSession session = userSessionDetails.getSession();
+                if (session.getUser().getIpMask() != null) {
+                    IpMatcher ipMatcher = new IpMatcher(session.getUser().getIpMask());
+                    if (!ipMatcher.match(ipAddress)) {
+                        log.info("IP address {} is not permitted for user {}", ipAddress, session.getUser());
 
-                IpMatcher ipMatcher = new IpMatcher(session.getUser().getIpMask());
-                if (!ipMatcher.match(ipAddress)) {
-                    log.info("IP address {} is not permitted for user {}", ipAddress, session.getUser());
-
-                    throw new LoginException(messages.getMessage(MSG_PACK, "LoginException.invalidIP"));
+                        throw new LoginException(messages.getMessage(MSG_PACK, "LoginException.invalidIP"));
+                    }
                 }
             }
         }
+    }
+
+    @Override
+    public int getOrder() {
+        return HIGHEST_PLATFORM_PRECEDENCE + 20;
     }
 }

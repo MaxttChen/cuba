@@ -24,6 +24,7 @@ import com.haulmont.cuba.security.entity.User;
 import com.haulmont.cuba.security.global.LoginException;
 import com.haulmont.cuba.security.global.UserSession;
 import com.haulmont.cuba.security.sys.UserSessionManager;
+import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
@@ -31,9 +32,11 @@ import java.util.List;
 import java.util.Locale;
 
 @Component("cuba_LoginPasswordAuthenticationProvider")
-public class LoginPasswordAuthenticationProvider extends AbstractAuthenticationProvider {
+public class LoginPasswordAuthenticationProvider extends AbstractAuthenticationProvider implements Ordered {
     @Inject
-    protected List<UserPermissionsChecker> userPermissionsCheckers;
+    protected List<AccessChecker> accessCheckers;
+    @Inject
+    protected List<CredentialsChecker> credentialsCheckers;
     @Inject
     protected UserSessionManager userSessionManager;
     @Inject
@@ -46,6 +49,8 @@ public class LoginPasswordAuthenticationProvider extends AbstractAuthenticationP
 
     @Override
     public UserSessionDetails authenticate(Credentials credentials) throws LoginException {
+        checkUserCredentials(credentials);
+
         LoginPasswordCredentials loginAndPassword = (LoginPasswordCredentials) credentials;
 
         String login = loginAndPassword.getLogin();
@@ -70,15 +75,23 @@ public class LoginPasswordAuthenticationProvider extends AbstractAuthenticationP
 
         UserSessionDetails userSessionDetails = new SimpleUserSessionDetails(session);
 
-        checkUserDetails(loginAndPassword, userSessionDetails);
+        checkUserAccess(loginAndPassword, userSessionDetails);
 
         return userSessionDetails;
     }
 
-    protected void checkUserDetails(Credentials loginAndPassword, UserSessionDetails userSessionDetails)
+    protected void checkUserCredentials(Credentials credentials) throws LoginException {
+        if (credentialsCheckers != null) {
+            for (CredentialsChecker checker : credentialsCheckers) {
+                checker.check(credentials);
+            }
+        }
+    }
+
+    protected void checkUserAccess(Credentials loginAndPassword, UserSessionDetails userSessionDetails)
             throws LoginException {
-        if (userPermissionsCheckers != null) {
-            for (UserPermissionsChecker checker : userPermissionsCheckers) {
+        if (accessCheckers != null) {
+            for (AccessChecker checker : accessCheckers) {
                 checker.check(loginAndPassword, userSessionDetails);
             }
         }
@@ -87,5 +100,10 @@ public class LoginPasswordAuthenticationProvider extends AbstractAuthenticationP
     @Override
     public boolean supports(Class<?> credentialsClass) {
         return LoginPasswordCredentials.class.isAssignableFrom(credentialsClass);
+    }
+
+    @Override
+    public int getOrder() {
+        return HIGHEST_PLATFORM_PRECEDENCE + 10;
     }
 }

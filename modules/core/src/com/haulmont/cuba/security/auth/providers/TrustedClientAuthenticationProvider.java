@@ -26,6 +26,7 @@ import com.haulmont.cuba.security.sys.TrustedLoginHandler;
 import com.haulmont.cuba.security.sys.UserSessionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
@@ -33,12 +34,12 @@ import java.util.List;
 import java.util.Locale;
 
 @Component("cuba_TrustedClientAuthenticationProvider")
-public class TrustedClientAuthenticationProvider extends AbstractAuthenticationProvider {
+public class TrustedClientAuthenticationProvider extends AbstractAuthenticationProvider implements Ordered {
 
     private final Logger log = LoggerFactory.getLogger(TrustedClientAuthenticationProvider.class);
 
     @Inject
-    protected List<UserPermissionsChecker> userPermissionsCheckers;
+    protected List<AccessChecker> accessCheckers;
     @Inject
     protected UserSessionManager userSessionManager;
     @Inject
@@ -63,7 +64,7 @@ public class TrustedClientAuthenticationProvider extends AbstractAuthenticationP
             throw new LoginException(getInvalidCredentialsMessage(login, credentialsLocale));
         }
 
-        if (trustedClient.getIpAddress() != null) {
+        if (trustedClient.getClientIpAddress() != null) {
             // reject request from not permitted client ip
             if (!trustedLoginHandler.checkAddress(trustedClient.getIpAddress())) {
                 log.warn("Attempt of trusted login from not permitted IP address: {} {}", login, trustedClient.getIpAddress());
@@ -85,15 +86,15 @@ public class TrustedClientAuthenticationProvider extends AbstractAuthenticationP
 
         UserSessionDetails userSessionDetails = new SimpleUserSessionDetails(session);
 
-        checkUserDetails(trustedClient, userSessionDetails);
+        checkUserAccess(trustedClient, userSessionDetails);
 
         return userSessionDetails;
     }
 
-    protected void checkUserDetails(Credentials loginAndPassword, UserSessionDetails userSessionDetails)
+    protected void checkUserAccess(Credentials loginAndPassword, UserSessionDetails userSessionDetails)
             throws LoginException {
-        if (userPermissionsCheckers != null) {
-            for (UserPermissionsChecker checker : userPermissionsCheckers) {
+        if (accessCheckers != null) {
+            for (AccessChecker checker : accessCheckers) {
                 checker.check(loginAndPassword, userSessionDetails);
             }
         }
@@ -102,5 +103,10 @@ public class TrustedClientAuthenticationProvider extends AbstractAuthenticationP
     @Override
     public boolean supports(Class<?> credentialsClass) {
         return TrustedClientCredentials.class.isAssignableFrom(credentialsClass);
+    }
+
+    @Override
+    public int getOrder() {
+        return HIGHEST_PLATFORM_PRECEDENCE + 30;
     }
 }

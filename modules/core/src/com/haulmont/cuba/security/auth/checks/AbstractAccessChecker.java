@@ -17,17 +17,17 @@
 package com.haulmont.cuba.security.auth.checks;
 
 import com.haulmont.cuba.core.global.Messages;
-import com.haulmont.cuba.security.auth.UserPermissionsChecker;
+import com.haulmont.cuba.security.auth.AccessChecker;
 
 import java.util.Locale;
 
-public abstract class AbstractUserPermissionsChecker implements UserPermissionsChecker {
+public abstract class AbstractAccessChecker implements AccessChecker {
 
     protected static final String MSG_PACK = "com.haulmont.cuba.security";
 
     protected Messages messages;
 
-    public AbstractUserPermissionsChecker(Messages messages) {
+    public AbstractAccessChecker(Messages messages) {
         this.messages = messages;
     }
 

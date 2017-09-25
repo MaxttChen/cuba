@@ -32,7 +32,7 @@ public class AnonymousSessionHolder implements AppContext.Listener, Ordered {
 
     private final Logger log = LoggerFactory.getLogger(AnonymousSessionHolder.class);
 
-    protected UserSession session;
+    protected volatile UserSession session;
 
     @Inject
     protected AuthenticationManager authenticationManager;

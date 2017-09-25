@@ -93,6 +93,16 @@ public abstract class AbstractAuthenticationProvider implements AuthenticationPr
 
     protected void setClientSessionParams(AbstractClientCredentials clientCredentials, UserSession userSession) {
         userSession.setClientInfo(clientCredentials.getClientInfo());
-        userSession.setAddress(clientCredentials.getIpAddress());
+
+        if (clientCredentials.getHostName() != null) {
+            StringBuilder addressBuilder = new StringBuilder();
+            addressBuilder.append(clientCredentials.getHostName());
+            if (clientCredentials.getIpAddress() != null) {
+                addressBuilder.append(" (").append(clientCredentials.getIpAddress()).append(")");
+            }
+            userSession.setAddress(addressBuilder.toString());
+        } else {
+            userSession.setAddress(clientCredentials.getIpAddress());
+        }
     }
 }

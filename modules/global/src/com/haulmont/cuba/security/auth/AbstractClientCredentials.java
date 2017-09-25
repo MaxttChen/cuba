@@ -21,10 +21,12 @@ import com.haulmont.cuba.core.global.ClientType;
 import java.util.Locale;
 import java.util.Map;
 
-public abstract class AbstractClientCredentials extends AbstractCredentials {
+public abstract class AbstractClientCredentials extends AbstractCredentials implements SyncSessionCredentials {
     private String clientInfo;
     private String ipAddress;
+    private String hostName;
     private ClientType clientType;
+    private boolean syncNewUserSessionReplication = false;
 
     private boolean checkClientPermissions = true;
 
@@ -68,4 +70,21 @@ public abstract class AbstractClientCredentials extends AbstractCredentials {
     }
 
     public abstract String getUserIdentifier();
+
+    @Override
+    public boolean isSyncNewUserSessionReplication() {
+        return syncNewUserSessionReplication;
+    }
+
+    public void setSyncNewUserSessionReplication(boolean syncNewUserSessionReplication) {
+        this.syncNewUserSessionReplication = syncNewUserSessionReplication;
+    }
+
+    public String getHostName() {
+        return hostName;
+    }
+
+    public void setHostName(String hostName) {
+        this.hostName = hostName;
+    }
 }

@@ -16,21 +16,18 @@
 
 package com.haulmont.cuba.security.auth;
 
-import java.util.Collections;
-import java.util.Locale;
-import java.util.Map;
+import com.haulmont.cuba.security.global.LoginException;
 
-public class AnonymousUserCredentials extends AbstractCredentials {
-    private static final long serialVersionUID = 3137392403475947L;
+public interface AccessChecker {
+    /**
+     * Defines the highest precedence for {@link org.springframework.core.Ordered} providers of the platform.
+     */
+    int HIGHEST_PLATFORM_PRECEDENCE = 100;
 
-    public AnonymousUserCredentials() {
-    }
+    /**
+     * Defines the lowest precedence for {@link org.springframework.core.Ordered} providers of the platform.
+     */
+    int LOWEST_PLATFORM_PRECEDENCE = 1000;
 
-    public AnonymousUserCredentials(Locale locale) {
-        super(locale, Collections.emptyMap());
-    }
-
-    public AnonymousUserCredentials(Locale locale, Map<String, Object> params) {
-        super(locale, params);
-    }
+    void check(Credentials credentials, UserSessionDetails userSessionDetails) throws LoginException;
 }

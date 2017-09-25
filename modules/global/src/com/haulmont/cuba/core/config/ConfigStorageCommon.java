@@ -22,7 +22,8 @@ import com.haulmont.cuba.core.global.Configuration;
 import com.haulmont.cuba.core.global.GlobalConfig;
 import com.haulmont.cuba.core.sys.AppContext;
 import com.haulmont.cuba.core.sys.SecurityContext;
-import com.haulmont.cuba.security.app.LoginService;
+import com.haulmont.cuba.security.auth.AuthenticationService;
+import com.haulmont.cuba.security.auth.TrustedClientCredentials;
 import com.haulmont.cuba.security.global.LoginException;
 import com.haulmont.cuba.security.global.UserSession;
 import org.apache.commons.lang.StringUtils;
@@ -45,7 +46,7 @@ public class ConfigStorageCommon {
     @Inject
     protected Configuration configuration;
     @Inject
-    protected LoginService loginService;
+    protected AuthenticationService authenticationService;
 
     public String printAppProperties(String prefix) {
         List<String> list = new ArrayList<>();
@@ -119,7 +120,10 @@ public class ConfigStorageCommon {
                             try {
                                 Map<String, Locale> availableLocales = configuration.getConfig(GlobalConfig.class).getAvailableLocales();
                                 Locale defaultLocale = availableLocales.values().iterator().next();
-                                UserSession session = loginService.loginTrusted(userLogin, userPassword, defaultLocale);
+
+                                TrustedClientCredentials credentials = new TrustedClientCredentials(userLogin, userPassword, defaultLocale);
+
+                                UserSession session = authenticationService.login(credentials).getSession();
                                 AppContext.setSecurityContext(new SecurityContext(session));
                                 logoutRequired = true;
                             } catch (LoginException e) {
@@ -139,7 +143,7 @@ public class ConfigStorageCommon {
             } finally {
                 if (logoutRequired) {
                     try {
-                        loginService.logout();
+                        authenticationService.logout();
                     } finally {
                         AppContext.setSecurityContext(null);
                     }

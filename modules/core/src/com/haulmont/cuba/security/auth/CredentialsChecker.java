@@ -18,6 +18,16 @@ package com.haulmont.cuba.security.auth;
 
 import com.haulmont.cuba.security.global.LoginException;
 
-public interface UserPermissionsChecker {
-    void check(Credentials credentials, UserSessionDetails userSessionDetails) throws LoginException;
+public interface CredentialsChecker {
+    /**
+     * Defines the highest precedence for {@link org.springframework.core.Ordered} providers of the platform.
+     */
+    int HIGHEST_PLATFORM_PRECEDENCE = 100;
+
+    /**
+     * Defines the lowest precedence for {@link org.springframework.core.Ordered} providers of the platform.
+     */
+    int LOWEST_PLATFORM_PRECEDENCE = 1000;
+
+    void check(Credentials credentials) throws LoginException;
 }

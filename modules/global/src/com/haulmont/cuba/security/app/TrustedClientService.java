@@ -19,7 +19,11 @@ package com.haulmont.cuba.security.app;
 import com.haulmont.cuba.security.global.LoginException;
 import com.haulmont.cuba.security.global.UserSession;
 
-// todo
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.util.UUID;
+
+// todo JavaDoc
 public interface TrustedClientService {
     String NAME = "cuba_TrustedClientService";
 
@@ -33,6 +37,7 @@ public interface TrustedClientService {
      * @return created user session
      * @throws LoginException in case of unsuccessful login
      */
+    @Nonnull
     UserSession getSystemSession(String trustedClientPassword) throws LoginException;
 
     /**
@@ -42,5 +47,9 @@ public interface TrustedClientService {
      * @return
      * @throws LoginException
      */
+    @Nonnull
     UserSession getAnonymousSession(String trustedClientPassword) throws LoginException;
+
+    @Nullable
+    UserSession findSession(String trustedClientPassword, UUID sessionId) throws LoginException;
 }
