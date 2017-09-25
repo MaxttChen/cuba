@@ -19,8 +19,10 @@ package com.haulmont.restapi.auth;
 import com.google.common.base.Preconditions;
 import com.haulmont.cuba.core.global.Configuration;
 import com.haulmont.cuba.core.sys.SecurityContext;
-import com.haulmont.cuba.security.app.LoginService;
+import com.haulmont.cuba.security.auth.AuthenticationService;
+import com.haulmont.cuba.security.auth.TrustedClientCredentials;
 import com.haulmont.cuba.security.global.LoginException;
+import com.haulmont.cuba.security.global.RestApiAccessDeniedException;
 import com.haulmont.cuba.security.global.UserSession;
 import com.haulmont.restapi.config.RestApiConfig;
 import org.slf4j.Logger;
@@ -51,7 +53,7 @@ public class ExternalOAuthTokenGranter extends AbstractTokenGranter implements O
     @Inject
     protected Configuration configuration;
     @Inject
-    protected LoginService loginService;
+    protected AuthenticationService authenticationService;
 
     protected ExternalOAuthTokenGranter(AuthorizationServerTokenServices tokenServices,
                                         ClientDetailsService clientDetailsService,
@@ -62,7 +64,7 @@ public class ExternalOAuthTokenGranter extends AbstractTokenGranter implements O
     }
 
     @Override
-    public OAuth2AccessTokenResult issueToken(String login, Locale locale, OAuth2AccessTokenReqest tokenReqest) {
+    public OAuth2AccessTokenResult issueToken(String login, Locale locale, OAuth2AccessTokenRequest tokenRequest) {
         RestApiConfig config = configuration.getConfig(RestApiConfig.class);
 
         Map<String, String> parameters = new HashMap<>();
@@ -73,35 +75,31 @@ public class ExternalOAuthTokenGranter extends AbstractTokenGranter implements O
 
         UserSession session;
         try {
-            session = loginService.loginTrusted(login, config.getTrustedClientPassword(),
-                    locale, tokenReqest.getLoginParams());
-            if (!session.isSpecificPermitted("cuba.restApi.enabled")) {
-                try {
-                    withSecurityContext(new SecurityContext(session), () ->
-                            loginService.logout()
-                    );
-                } catch (Exception e) {
-                    log.error("Unable to logout", e);
-                }
+            TrustedClientCredentials credentials = new TrustedClientCredentials(login, config.getTrustedClientPassword(), locale);
+            credentials.setRestApiAccess(true);
+            credentials.setClientInfo("REST API");
+            credentials.setParams(tokenRequest.getLoginParams());
 
-                throw new BadCredentialsException("User is not allowed to use the REST API");
-            }
+            session = authenticationService.login(credentials).getSession();
+        } catch (RestApiAccessDeniedException ex) {
+            log.info("User is not allowed to use the REST API {}", login);
+            throw new BadCredentialsException("User is not allowed to use the REST API");
         } catch (LoginException e) {
             log.info("Unable to issue token for REST API: {}", login);
             throw new BadCredentialsException("Bad credentials");
         }
 
         parameters.put(SESSION_ID_DETAILS_ATTRIBUTE, session.getId().toString());
-        for (Map.Entry<String, String> tokenParam : tokenReqest.getTokenDetails().entrySet()) {
+        for (Map.Entry<String, String> tokenParam : tokenRequest.getTokenDetails().entrySet()) {
             parameters.put(EXTENDED_DETAILS_ATTRIBUTE_PREFIX + tokenParam.getKey(), tokenParam.getValue());
         }
 
         // issue token using obtained Session, it is required for DB operations inside of persistent token store
         OAuth2AccessToken accessToken = withSecurityContext(new SecurityContext(session), () -> {
             ClientDetails authenticatedClient = clientDetailsService.loadClientByClientId(config.getRestClientId());
-            TokenRequest tokenRequest = getRequestFactory().createTokenRequest(parameters, authenticatedClient);
+            TokenRequest tr = getRequestFactory().createTokenRequest(parameters, authenticatedClient);
 
-            return grant(GRANT_TYPE, tokenRequest);
+            return grant(GRANT_TYPE, tr);
         });
 
         return new OAuth2AccessTokenResult(session, accessToken);
@@ -109,7 +107,7 @@ public class ExternalOAuthTokenGranter extends AbstractTokenGranter implements O
 
     @Override
     public OAuth2AccessTokenResult issueToken(String login, Locale locale, Map<String, Object> loginParams) {
-        return issueToken(login, locale, new OAuth2AccessTokenReqest(loginParams));
+        return issueToken(login, locale, new OAuth2AccessTokenRequest(loginParams));
     }
 
     @Override

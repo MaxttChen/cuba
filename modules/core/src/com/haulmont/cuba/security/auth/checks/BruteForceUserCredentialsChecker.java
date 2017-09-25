@@ -21,8 +21,9 @@ import com.haulmont.cuba.core.global.Messages;
 import com.haulmont.cuba.security.app.BruteForceProtectionAPI;
 import com.haulmont.cuba.security.auth.AbstractClientCredentials;
 import com.haulmont.cuba.security.auth.Credentials;
-import com.haulmont.cuba.security.auth.CredentialsChecker;
+import com.haulmont.cuba.security.auth.UserCredentialsChecker;
 import com.haulmont.cuba.security.auth.events.AuthenticationFailureEvent;
+import com.haulmont.cuba.security.global.AccountLockedException;
 import com.haulmont.cuba.security.global.LoginException;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.Ordered;
@@ -31,8 +32,8 @@ import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 
-@Component("cuba_BruteForceCredentialsChecker")
-public class BruteForceCredentialsChecker implements CredentialsChecker, Ordered {
+@Component("cuba_BruteForceUserCredentialsChecker")
+public class BruteForceUserCredentialsChecker implements UserCredentialsChecker, Ordered {
 
     protected static final String MSG_PACK = "com.haulmont.cuba.security";
 
@@ -53,7 +54,7 @@ public class BruteForceCredentialsChecker implements CredentialsChecker, Ordered
                             "LoginException.loginAttemptsNumberExceeded",
                             bruteForceProtectionAPI.getBruteForceBlockIntervalSec());
 
-                    throw new LoginException(message);
+                    throw new AccountLockedException(message);
                 }
             }
         }

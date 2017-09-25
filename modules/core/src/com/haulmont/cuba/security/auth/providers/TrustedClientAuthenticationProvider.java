@@ -39,7 +39,7 @@ public class TrustedClientAuthenticationProvider extends AbstractAuthenticationP
     private final Logger log = LoggerFactory.getLogger(TrustedClientAuthenticationProvider.class);
 
     @Inject
-    protected List<AccessChecker> accessCheckers;
+    protected List<UserAccessChecker> userAccessCheckers;
     @Inject
     protected UserSessionManager userSessionManager;
     @Inject
@@ -93,8 +93,8 @@ public class TrustedClientAuthenticationProvider extends AbstractAuthenticationP
 
     protected void checkUserAccess(Credentials loginAndPassword, UserSessionDetails userSessionDetails)
             throws LoginException {
-        if (accessCheckers != null) {
-            for (AccessChecker checker : accessCheckers) {
+        if (userAccessCheckers != null) {
+            for (UserAccessChecker checker : userAccessCheckers) {
                 checker.check(loginAndPassword, userSessionDetails);
             }
         }

@@ -30,13 +30,13 @@ import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 
-@Component("cuba_IpMaskAccessChecker")
-public class IpMaskAccessChecker extends AbstractAccessChecker implements Ordered {
+@Component("cuba_IpMaskUserAccessChecker")
+public class IpMaskUserAccessChecker extends AbstractUserAccessChecker implements Ordered {
 
-    private final Logger log = LoggerFactory.getLogger(IpMaskAccessChecker.class);
+    private final Logger log = LoggerFactory.getLogger(IpMaskUserAccessChecker.class);
 
     @Inject
-    public IpMaskAccessChecker(Messages messages) {
+    public IpMaskUserAccessChecker(Messages messages) {
         super(messages);
     }
 

@@ -21,7 +21,6 @@ import com.haulmont.cuba.core.global.GlobalConfig;
 import com.haulmont.cuba.core.global.PasswordEncryption;
 import com.haulmont.cuba.core.global.UserSessionSource;
 import com.haulmont.cuba.gui.components.*;
-import com.haulmont.cuba.security.app.LoginService;
 import com.haulmont.cuba.security.app.UserManagementService;
 import com.haulmont.cuba.security.entity.User;
 import com.haulmont.cuba.security.global.LoginException;
@@ -85,9 +84,6 @@ public class AppLoginWindow extends AbstractWindow implements Window.TopLevelWin
 
     @Inject
     protected WebAuthConfig webAuthConfig;
-
-    @Inject
-    protected LoginService loginService;
 
     @Inject
     protected UserSessionSource userSessionSource;

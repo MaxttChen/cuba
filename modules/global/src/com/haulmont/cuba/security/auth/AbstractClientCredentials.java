@@ -27,6 +27,7 @@ public abstract class AbstractClientCredentials extends AbstractCredentials impl
     private String hostName;
     private ClientType clientType;
     private boolean syncNewUserSessionReplication = false;
+    private boolean restApiAccess = false;
 
     private boolean checkClientPermissions = true;
 
@@ -86,5 +87,13 @@ public abstract class AbstractClientCredentials extends AbstractCredentials impl
 
     public void setHostName(String hostName) {
         this.hostName = hostName;
+    }
+
+    public boolean isRestApiAccess() {
+        return restApiAccess;
+    }
+
+    public void setRestApiAccess(boolean restApiAccess) {
+        this.restApiAccess = restApiAccess;
     }
 }

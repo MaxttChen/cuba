@@ -30,16 +30,16 @@ import org.springframework.stereotype.Component;
 import javax.inject.Inject;
 import java.util.Locale;
 
-@Component("cuba_ClientTypeAccessChecker")
-public class ClientTypeAccessChecker extends AbstractAccessChecker implements Ordered {
+@Component("cuba_ClientTypeUserAccessChecker")
+public class ClientTypeUserAccessChecker extends AbstractUserAccessChecker implements Ordered {
 
-    private final Logger log = LoggerFactory.getLogger(ClientTypeAccessChecker.class);
+    private final Logger log = LoggerFactory.getLogger(ClientTypeUserAccessChecker.class);
 
     @Inject
     protected Messages messages;
 
     @Inject
-    public ClientTypeAccessChecker(Messages messages) {
+    public ClientTypeUserAccessChecker(Messages messages) {
         super(messages);
     }
 

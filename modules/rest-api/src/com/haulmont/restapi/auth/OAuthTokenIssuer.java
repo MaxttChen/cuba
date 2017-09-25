@@ -50,7 +50,7 @@ public interface OAuthTokenIssuer {
      * @throws BadCredentialsException in case of user is now allowed to use REST-API or middleware
      *                                 throws {@link com.haulmont.cuba.security.global.LoginException} during login
      */
-    OAuth2AccessTokenResult issueToken(String login, Locale locale, OAuth2AccessTokenReqest tokenRequest);
+    OAuth2AccessTokenResult issueToken(String login, Locale locale, OAuth2AccessTokenRequest tokenRequest);
 
     /**
      * Result of programmatic access token generation.
@@ -73,14 +73,14 @@ public interface OAuthTokenIssuer {
         }
     }
 
-    class OAuth2AccessTokenReqest {
+    class OAuth2AccessTokenRequest {
         private Map<String, Object> loginParams = Collections.emptyMap();
         private Map<String, String> tokenDetails = Collections.emptyMap();
 
-        public OAuth2AccessTokenReqest() {
+        public OAuth2AccessTokenRequest() {
         }
 
-        public OAuth2AccessTokenReqest(Map<String, Object> loginParams) {
+        public OAuth2AccessTokenRequest(Map<String, Object> loginParams) {
             this.loginParams = loginParams;
         }
 

@@ -18,7 +18,7 @@ package com.haulmont.cuba.security.auth;
 
 import com.haulmont.cuba.security.global.LoginException;
 
-public interface CredentialsChecker {
+public interface UserCredentialsChecker {
     /**
      * Defines the highest precedence for {@link org.springframework.core.Ordered} providers of the platform.
      */

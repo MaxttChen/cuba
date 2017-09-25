@@ -37,9 +37,9 @@ import java.util.Locale;
 @Component("cuba_RememberMeAuthenticationProvider")
 public class RememberMeAuthenticationProvider extends AbstractAuthenticationProvider implements Ordered {
     @Inject
-    protected List<AccessChecker> accessCheckers;
+    protected List<UserAccessChecker> userAccessCheckers;
     @Inject
-    protected List<CredentialsChecker> credentialsCheckers;
+    protected List<UserCredentialsChecker> userCredentialsCheckers;
     @Inject
     protected UserSessionManager userSessionManager;
 
@@ -83,8 +83,8 @@ public class RememberMeAuthenticationProvider extends AbstractAuthenticationProv
     }
 
     protected void checkCredentials(Credentials credentials) throws LoginException {
-        if (credentialsCheckers != null) {
-            for (CredentialsChecker checker : credentialsCheckers) {
+        if (userCredentialsCheckers != null) {
+            for (UserCredentialsChecker checker : userCredentialsCheckers) {
                 checker.check(credentials);
             }
         }
@@ -92,8 +92,8 @@ public class RememberMeAuthenticationProvider extends AbstractAuthenticationProv
 
     protected void checkAccess(Credentials loginAndPassword, UserSessionDetails userSessionDetails)
             throws LoginException {
-        if (accessCheckers != null) {
-            for (AccessChecker checker : accessCheckers) {
+        if (userAccessCheckers != null) {
+            for (UserAccessChecker checker : userAccessCheckers) {
                 checker.check(loginAndPassword, userSessionDetails);
             }
         }

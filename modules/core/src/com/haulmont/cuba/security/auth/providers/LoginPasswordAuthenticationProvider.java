@@ -34,9 +34,9 @@ import java.util.Locale;
 @Component("cuba_LoginPasswordAuthenticationProvider")
 public class LoginPasswordAuthenticationProvider extends AbstractAuthenticationProvider implements Ordered {
     @Inject
-    protected List<AccessChecker> accessCheckers;
+    protected List<UserAccessChecker> userAccessCheckers;
     @Inject
-    protected List<CredentialsChecker> credentialsCheckers;
+    protected List<UserCredentialsChecker> userCredentialsCheckers;
     @Inject
     protected UserSessionManager userSessionManager;
     @Inject
@@ -81,8 +81,8 @@ public class LoginPasswordAuthenticationProvider extends AbstractAuthenticationP
     }
 
     protected void checkUserCredentials(Credentials credentials) throws LoginException {
-        if (credentialsCheckers != null) {
-            for (CredentialsChecker checker : credentialsCheckers) {
+        if (userCredentialsCheckers != null) {
+            for (UserCredentialsChecker checker : userCredentialsCheckers) {
                 checker.check(credentials);
             }
         }
@@ -90,8 +90,8 @@ public class LoginPasswordAuthenticationProvider extends AbstractAuthenticationP
 
     protected void checkUserAccess(Credentials loginAndPassword, UserSessionDetails userSessionDetails)
             throws LoginException {
-        if (accessCheckers != null) {
-            for (AccessChecker checker : accessCheckers) {
+        if (userAccessCheckers != null) {
+            for (UserAccessChecker checker : userAccessCheckers) {
                 checker.check(loginAndPassword, userSessionDetails);
             }
         }
