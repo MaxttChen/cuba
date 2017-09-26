@@ -16,10 +16,16 @@
 
 package com.haulmont.cuba.security.auth;
 
+import com.haulmont.cuba.core.global.PasswordEncryption;
+
 import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
 
+/**
+ * Simple login and password credentials.
+ * Password should be pre-hashed in clients with {@link PasswordEncryption#getPlainHash(String)}.
+ */
 public class LoginPasswordCredentials extends AbstractClientCredentials {
 
     private static final long serialVersionUID = 348348249386685775L;

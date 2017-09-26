@@ -43,14 +43,14 @@ public class AuthenticationServiceBean implements AuthenticationService {
     protected UserSessionLog userSessionLog;
 
     @Override
-    public UserSessionDetails login(Credentials credentials) throws LoginException {
+    public AuthenticationDetails login(Credentials credentials) throws LoginException {
         try {
             //noinspection UnnecessaryLocalVariable
-            UserSessionDetails userSessionDetails = authenticationManager.login(credentials);
+            AuthenticationDetails authenticationDetails = authenticationManager.login(credentials);
 
-            userSessionLog.createSessionLogRecord(userSessionDetails.getSession(), SessionAction.LOGIN, Collections.emptyMap());
+            userSessionLog.createSessionLogRecord(authenticationDetails.getSession(), SessionAction.LOGIN, Collections.emptyMap());
 
-            return userSessionDetails;
+            return authenticationDetails;
         } catch (LoginException e) {
             log.info("Login failed: {}", e.toString());
             throw e;
@@ -61,11 +61,11 @@ public class AuthenticationServiceBean implements AuthenticationService {
     }
 
     @Override
-    public UserSessionDetails authenticate(Credentials credentials) throws LoginException {
+    public AuthenticationDetails authenticate(Credentials credentials) throws LoginException {
         try {
             //noinspection UnnecessaryLocalVariable
-            UserSessionDetails userSessionDetails = authenticationManager.authenticate(credentials);
-            return userSessionDetails;
+            AuthenticationDetails authenticationDetails = authenticationManager.authenticate(credentials);
+            return authenticationDetails;
         } catch (LoginException e) {
             log.info("Authentication failed: {}", e.toString());
             throw e;

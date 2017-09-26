@@ -21,7 +21,7 @@ import com.haulmont.cuba.core.global.UuidSource;
 import com.haulmont.cuba.security.app.UserSessions;
 import com.haulmont.cuba.security.auth.AuthenticationManager;
 import com.haulmont.cuba.security.auth.LoginPasswordCredentials;
-import com.haulmont.cuba.security.auth.UserSessionDetails;
+import com.haulmont.cuba.security.auth.AuthenticationDetails;
 import com.haulmont.cuba.security.entity.User;
 import com.haulmont.cuba.security.global.IdpSession;
 import com.haulmont.cuba.security.global.LoginException;
@@ -64,7 +64,7 @@ public class IdpServiceBean implements IdpService {
         log.debug("Authenticating CUBA user for IDP");
 
         LoginPasswordCredentials credentials = new LoginPasswordCredentials(login, password, locale, parameters);
-        UserSessionDetails sessionDetails = authenticationManager.authenticate(credentials);
+        AuthenticationDetails sessionDetails = authenticationManager.authenticate(credentials);
         User user = sessionDetails.getSession().getUser();
 
         IdpSession session = new IdpSession(createIdpSessionId());

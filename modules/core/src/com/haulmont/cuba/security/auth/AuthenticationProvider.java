@@ -20,6 +20,9 @@ import com.haulmont.cuba.security.global.LoginException;
 
 import javax.annotation.Nullable;
 
+/**
+ * Authentication module that can process a specific {@link Credentials} implementation.
+ */
 public interface AuthenticationProvider {
     /**
      * Defines the highest precedence for {@link org.springframework.core.Ordered} providers of the platform.
@@ -31,8 +34,22 @@ public interface AuthenticationProvider {
      */
     int LOWEST_PLATFORM_PRECEDENCE = 1000;
 
+    /**
+     * Authenticates a user and provides authentication details. Should not start session.
+     * Obtained session cannot be used for service requests.
+     *
+     * @param credentials credentials
+     * @return authentication details
+     * @throws LoginException if authentication fails
+     */
     @Nullable
-    UserSessionDetails authenticate(Credentials credentials) throws LoginException;
+    AuthenticationDetails authenticate(Credentials credentials) throws LoginException;
 
+    /**
+     * Checks if this provider supports passed credentials class or not.
+     *
+     * @param credentialsClass credentials class
+     * @return true if this provider supports the indicated {@link Credentials} object.
+     */
     boolean supports(Class<?> credentialsClass);
 }

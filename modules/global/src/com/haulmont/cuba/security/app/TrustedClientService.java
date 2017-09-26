@@ -23,7 +23,9 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.UUID;
 
-// todo JavaDoc
+/**
+ * Service that provides additional API for trusted clients.
+ */
 public interface TrustedClientService {
     String NAME = "cuba_TrustedClientService";
 
@@ -35,21 +37,29 @@ public interface TrustedClientService {
      *
      * @param trustedClientPassword trusted client password
      * @return created user session
-     * @throws LoginException in case of unsuccessful login
+     * @throws LoginException if passed invalid trusted client password
      */
     @Nonnull
     UserSession getSystemSession(String trustedClientPassword) throws LoginException;
 
     /**
-     * todo
+     * Get anonymous user session from a trusted client.
      *
-     * @param trustedClientPassword
-     * @return
-     * @throws LoginException
+     * @param trustedClientPassword trusted client password
+     * @return anonymous user session
+     * @throws LoginException if passed invalid trusted client password
      */
     @Nonnull
     UserSession getAnonymousSession(String trustedClientPassword) throws LoginException;
 
+    /**
+     * Get a UserSession from the cache of currently active sessions.
+     *
+     * @param trustedClientPassword trusted client password
+     * @param sessionId             session id
+     * @return a UserSession instance or null, if not found
+     * @throws LoginException if passed invalid trusted client password
+     */
     @Nullable
     UserSession findSession(String trustedClientPassword, UUID sessionId) throws LoginException;
 }

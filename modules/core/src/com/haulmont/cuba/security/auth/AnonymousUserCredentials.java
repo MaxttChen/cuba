@@ -16,10 +16,17 @@
 
 package com.haulmont.cuba.security.auth;
 
+import com.haulmont.cuba.core.app.ServerConfig;
+
 import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
 
+/**
+ * Credentials object for anonymous session.
+ *
+ * @see ServerConfig#getAnonymousLogin()
+ */
 public class AnonymousUserCredentials extends AbstractCredentials {
     private static final long serialVersionUID = 3137392403475947L;
 

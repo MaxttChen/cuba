@@ -16,6 +16,7 @@
 
 package com.haulmont.restapi.auth;
 
+import com.haulmont.cuba.core.global.ClientType;
 import com.haulmont.cuba.core.global.Configuration;
 import com.haulmont.cuba.core.global.PasswordEncryption;
 import com.haulmont.cuba.core.sys.AppContext;
@@ -23,6 +24,7 @@ import com.haulmont.cuba.core.sys.SecurityContext;
 import com.haulmont.cuba.restapi.RestConfig;
 import com.haulmont.cuba.security.auth.AuthenticationService;
 import com.haulmont.cuba.security.auth.LoginPasswordCredentials;
+import com.haulmont.cuba.security.global.AccountLockedException;
 import com.haulmont.cuba.security.global.LoginException;
 import com.haulmont.cuba.security.global.RestApiAccessDeniedException;
 import com.haulmont.cuba.security.global.UserSession;
@@ -30,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -84,10 +87,13 @@ public class CubaUserAuthenticationProvider implements AuthenticationProvider, S
                 String passwordHash = passwordEncryption.getPlainHash((String) token.getCredentials());
 
                 LoginPasswordCredentials credentials = new LoginPasswordCredentials(login, passwordHash, request.getLocale());
-                credentials.setRestApiAccess(true);
+                credentials.setClientType(ClientType.REST_API);
                 credentials.setClientInfo("REST API");
 
                 session = authenticationService.login(credentials).getSession();
+            } catch (AccountLockedException le) {
+                log.info("Blocked user login attempt: login={}, ip={}", login, ipAddress);
+                throw new LockedException("User temporarily blocked");
             } catch (RestApiAccessDeniedException ex) {
                 log.info("User is not allowed to use the REST API {}", login);
                 throw new BadCredentialsException("User is not allowed to use the REST API");

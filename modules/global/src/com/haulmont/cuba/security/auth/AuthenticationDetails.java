@@ -18,15 +18,14 @@ package com.haulmont.cuba.security.auth;
 
 import com.haulmont.cuba.security.global.UserSession;
 
-public class SimpleUserSessionDetails implements UserSessionDetails {
-    private UserSession userSession;
+import java.io.Serializable;
 
-    public SimpleUserSessionDetails(UserSession userSession) {
-        this.userSession = userSession;
-    }
-
-    @Override
-    public UserSession getSession() {
-        return userSession;
-    }
+/**
+ * Interface that represents the result of authentication.
+ */
+public interface AuthenticationDetails extends Serializable {
+    /**
+     * @return user session with user and compiled permission set
+     */
+    UserSession getSession();
 }

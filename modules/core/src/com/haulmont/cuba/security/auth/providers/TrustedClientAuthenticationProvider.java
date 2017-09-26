@@ -51,7 +51,7 @@ public class TrustedClientAuthenticationProvider extends AbstractAuthenticationP
     }
 
     @Override
-    public UserSessionDetails authenticate(Credentials credentials) throws LoginException {
+    public AuthenticationDetails authenticate(Credentials credentials) throws LoginException {
         TrustedClientCredentials trustedClient = (TrustedClientCredentials) credentials;
 
         String login = trustedClient.getLogin();
@@ -84,18 +84,18 @@ public class TrustedClientAuthenticationProvider extends AbstractAuthenticationP
 
         setClientSessionParams(trustedClient, session);
 
-        UserSessionDetails userSessionDetails = new SimpleUserSessionDetails(session);
+        AuthenticationDetails authenticationDetails = new SimpleAuthenticationDetails(session);
 
-        checkUserAccess(trustedClient, userSessionDetails);
+        checkUserAccess(trustedClient, authenticationDetails);
 
-        return userSessionDetails;
+        return authenticationDetails;
     }
 
-    protected void checkUserAccess(Credentials loginAndPassword, UserSessionDetails userSessionDetails)
+    protected void checkUserAccess(Credentials loginAndPassword, AuthenticationDetails authenticationDetails)
             throws LoginException {
         if (userAccessCheckers != null) {
             for (UserAccessChecker checker : userAccessCheckers) {
-                checker.check(loginAndPassword, userSessionDetails);
+                checker.check(loginAndPassword, authenticationDetails);
             }
         }
     }

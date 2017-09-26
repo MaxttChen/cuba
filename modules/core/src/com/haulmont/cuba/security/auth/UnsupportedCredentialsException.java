@@ -16,6 +16,9 @@
 
 package com.haulmont.cuba.security.auth;
 
+/**
+ * Exception that is thrown if there is no {@link AuthenticationProvider} that can process credentials instance.
+ */
 public class UnsupportedCredentialsException extends RuntimeException {
     public UnsupportedCredentialsException(String message) {
         super(message);

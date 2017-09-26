@@ -20,6 +20,9 @@ import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
 
+/**
+ * Credentials for user that can be authenticated using trusted client password.
+ */
 public class TrustedClientCredentials extends AbstractClientCredentials {
 
     private static final long serialVersionUID = -2005955029379343063L;

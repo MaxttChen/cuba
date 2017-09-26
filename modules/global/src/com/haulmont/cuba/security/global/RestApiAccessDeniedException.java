@@ -19,6 +19,9 @@ package com.haulmont.cuba.security.global;
 import com.haulmont.cuba.core.global.Logging;
 import com.haulmont.cuba.core.global.SupportedByClient;
 
+/**
+ * Exception that is thrown when REST API user that does not have permission to use REST API.
+ */
 @SupportedByClient
 @Logging(Logging.Type.BRIEF)
 public class RestApiAccessDeniedException extends LoginException {

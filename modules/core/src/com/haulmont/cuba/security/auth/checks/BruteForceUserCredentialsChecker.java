@@ -32,6 +32,9 @@ import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 
+/**
+ * Checks if a user tries to brute-force password / remember me token.
+ */
 @Component("cuba_BruteForceUserCredentialsChecker")
 public class BruteForceUserCredentialsChecker implements UserCredentialsChecker, Ordered {
 
@@ -48,7 +51,8 @@ public class BruteForceUserCredentialsChecker implements UserCredentialsChecker,
             if (credentials instanceof AbstractClientCredentials) {
                 AbstractClientCredentials clientCredentials = (AbstractClientCredentials) credentials;
 
-                if (bruteForceProtectionAPI.loginAttemptsLeft(clientCredentials.getUserIdentifier(),
+                if (clientCredentials.getIpAddress() != null
+                        && bruteForceProtectionAPI.loginAttemptsLeft(clientCredentials.getUserIdentifier(),
                         clientCredentials.getIpAddress()) <= 0) {
                     String message = messages.formatMessage(MSG_PACK,
                             "LoginException.loginAttemptsNumberExceeded",
@@ -72,11 +76,11 @@ public class BruteForceUserCredentialsChecker implements UserCredentialsChecker,
                         clientCredentials.getUserIdentifier(), clientCredentials.getIpAddress());
                 String message;
                 if (loginAttemptsLeft > 0) {
-                    message = messages.formatMainMessage(
+                    message = messages.formatMessage(MSG_PACK,
                             "LoginException.loginFailedAttemptsLeft",
                             loginAttemptsLeft);
                 } else {
-                    message = messages.formatMainMessage(
+                    message = messages.formatMessage(MSG_PACK,
                             "LoginException.loginAttemptsNumberExceeded",
                             bruteForceProtectionAPI.getBruteForceBlockIntervalSec());
                 }

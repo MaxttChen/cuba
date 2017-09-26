@@ -24,7 +24,6 @@ import com.haulmont.cuba.security.auth.LoginPasswordCredentials;
 import com.haulmont.cuba.security.auth.RememberMeCredentials;
 import com.haulmont.cuba.security.auth.TrustedClientCredentials;
 import com.haulmont.cuba.security.global.LoginException;
-import com.haulmont.cuba.security.global.LoginFailedException;
 import com.haulmont.cuba.security.global.SessionParams;
 import com.haulmont.cuba.security.global.UserSession;
 import com.haulmont.cuba.web.auth.CubaAuthProvider;
@@ -37,7 +36,6 @@ import org.springframework.stereotype.Component;
 import javax.inject.Inject;
 import java.util.Locale;
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * Default {@link Connection} implementation for web-client.
@@ -62,11 +60,9 @@ public class DefaultConnection extends AbstractConnection implements ExternallyA
 
     @Override
     public void loginAnonymous(Locale locale) throws LoginException {
-        UUID anonymousSessionId = globalConfig.getAnonymousSessionId();
-
         UserSession session = doLoginAnonymous(locale);
         if (session == null) {
-            throw new LoginFailedException("Unable to obtain anonymous session with id " + anonymousSessionId);
+            throw new LoginException("Unable to obtain anonymous session");
         }
         session.setLocale(locale);
 

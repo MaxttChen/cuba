@@ -16,10 +16,11 @@
 
 package com.haulmont.cuba.security.auth.checks;
 
+import com.haulmont.cuba.core.global.ClientType;
 import com.haulmont.cuba.core.global.Messages;
 import com.haulmont.cuba.security.auth.AbstractClientCredentials;
+import com.haulmont.cuba.security.auth.AuthenticationDetails;
 import com.haulmont.cuba.security.auth.Credentials;
-import com.haulmont.cuba.security.auth.UserSessionDetails;
 import com.haulmont.cuba.security.global.LoginException;
 import com.haulmont.cuba.security.global.RestApiAccessDeniedException;
 import org.springframework.core.Ordered;
@@ -27,6 +28,9 @@ import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 
+/**
+ * Checks if login to REST API is permitted for user.
+ */
 @Component("cuba_RestApiUserAccessChecker")
 public class RestApiUserAccessChecker extends AbstractUserAccessChecker implements Ordered {
     @Inject
@@ -35,12 +39,13 @@ public class RestApiUserAccessChecker extends AbstractUserAccessChecker implemen
     }
 
     @Override
-    public void check(Credentials credentials, UserSessionDetails userSessionDetails) throws LoginException {
+    public void check(Credentials credentials, AuthenticationDetails authenticationDetails) throws LoginException {
         if (credentials instanceof AbstractClientCredentials) {
             AbstractClientCredentials clientCredentials = (AbstractClientCredentials) credentials;
 
-            if (clientCredentials.isRestApiAccess()
-                    && !userSessionDetails.getSession().isSpecificPermitted("cuba.restApi.enabled")) {
+            if (clientCredentials.isCheckClientPermissions()
+                    && clientCredentials.getClientType() == ClientType.REST_API
+                    && !authenticationDetails.getSession().isSpecificPermitted("cuba.restApi.enabled")) {
                 throw new RestApiAccessDeniedException(messages.getMessage(MSG_PACK, "LoginException.restApiAccessDenied"));
             }
         }

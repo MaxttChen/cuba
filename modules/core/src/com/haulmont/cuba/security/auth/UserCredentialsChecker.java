@@ -18,6 +18,9 @@ package com.haulmont.cuba.security.auth;
 
 import com.haulmont.cuba.security.global.LoginException;
 
+/**
+ * Checks if passed credentials object is valid.
+ */
 public interface UserCredentialsChecker {
     /**
      * Defines the highest precedence for {@link org.springframework.core.Ordered} providers of the platform.
@@ -29,5 +32,11 @@ public interface UserCredentialsChecker {
      */
     int LOWEST_PLATFORM_PRECEDENCE = 1000;
 
+    /**
+     * Checks if passed credentials object is valid.
+     *
+     * @param credentials credentials
+     * @throws LoginException if credentials object is invalid
+     */
     void check(Credentials credentials) throws LoginException;
 }

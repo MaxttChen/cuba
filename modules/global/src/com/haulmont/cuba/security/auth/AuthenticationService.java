@@ -20,26 +20,31 @@ import com.haulmont.cuba.security.entity.User;
 import com.haulmont.cuba.security.global.LoginException;
 import com.haulmont.cuba.security.global.UserSession;
 
+/**
+ * Authentication layer for client applications.
+ */
 public interface AuthenticationService {
     String NAME = "cuba_AuthenticationService";
 
     /**
-     * todo JavaDoc!
+     * Authenticates a user, starts session and provides authentication details.
+     * Obtained session can be used for service requests.
      *
-     * @param credentials
-     * @return
-     * @throws LoginException
+     * @param credentials credentials
+     * @return authentication details
+     * @throws LoginException if authentication fails
      */
-    UserSessionDetails login(Credentials credentials) throws LoginException;
+    AuthenticationDetails login(Credentials credentials) throws LoginException;
 
     /**
-     * todo JavaDoc!
+     * Authenticates a user and provides authentication details. Does not start session.
+     * Obtained session cannot be used for service requests.
      *
-     * @param credentials
-     * @return
-     * @throws LoginException
+     * @param credentials credentials
+     * @return authentication details
+     * @throws LoginException if authentication fails
      */
-    UserSessionDetails authenticate(Credentials credentials) throws LoginException;
+    AuthenticationDetails authenticate(Credentials credentials) throws LoginException;
 
     /**
      * Log out and destroy an active user session.

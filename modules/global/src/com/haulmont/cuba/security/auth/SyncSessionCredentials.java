@@ -17,6 +17,9 @@
 package com.haulmont.cuba.security.auth;
 
 public interface SyncSessionCredentials {
-
+    /**
+     * Indicates that a new user session created on login should be sent to the cluster synchronously.
+     * Overrides the application property cuba.syncNewUserSessionReplication.
+     */
     boolean isSyncNewUserSessionReplication();
 }

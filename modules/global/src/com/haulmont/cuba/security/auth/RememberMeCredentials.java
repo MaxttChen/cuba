@@ -20,6 +20,9 @@ import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
 
+/**
+ * Credentials with remember me token.
+ */
 public class RememberMeCredentials extends AbstractClientCredentials {
 
     private static final long serialVersionUID = -8040672847169347648L;

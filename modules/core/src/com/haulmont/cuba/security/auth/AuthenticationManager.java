@@ -22,39 +22,53 @@ import com.haulmont.cuba.security.global.UserSession;
 
 import javax.annotation.Nonnull;
 
+/**
+ * Authenticates users of the system.
+ */
 public interface AuthenticationManager {
     String NAME = "cuba_AuthenticationManager";
 
     /**
-     * todo JavaDoc!
+     * Authenticates a user, starts session and provides authentication details.
+     * Obtained session can be used for service requests.
      *
-     * @param credentials
-     * @return
-     * @throws LoginException
+     * @param credentials credentials
+     * @return authentication details
+     * @throws LoginException if authentication fails
      */
     @Nonnull
-    UserSessionDetails login(Credentials credentials) throws LoginException;
+    AuthenticationDetails login(Credentials credentials) throws LoginException;
 
     /**
-     * todo JavaDoc!
+     * Authenticates a user and provides authentication details. Does not start session.
+     * Obtained session cannot be used for service requests.
      *
-     * @param credentials
-     * @return
-     * @throws LoginException
+     * @param credentials credentials
+     * @return authentication details
+     * @throws LoginException if authentication fails
      */
     @Nonnull
-    UserSessionDetails authenticate(Credentials credentials) throws LoginException;
+    AuthenticationDetails authenticate(Credentials credentials) throws LoginException;
 
     /**
-     * todo JavaDoc!
+     * Log out and destroy an active user session.
      *
      * @see AuthenticationService#logout()
      */
     void logout();
 
     /**
-     * todo JavaDoc!
+     * Substitute a user, obtaining all its security related environment.
+     * <br>
+     * This method replaces an active UserSession with the new one, which is returned.
      *
+     * @param substitutedUser a user to substitute. Must be in the current users' {@link User#substitutions} list.
+     * @return new UserSession instance that contains: <ul>
+     * <li> id - the previously active user session id </li>
+     * <li> user - the logged in user </li>
+     * <li> substitutedUser - the user passed to this method  </li>
+     * <li> all security data - loaded for the substitutedUser </li>
+     * </ul>
      * @see AuthenticationService#substituteUser(User)
      */
     UserSession substituteUser(User substitutedUser);

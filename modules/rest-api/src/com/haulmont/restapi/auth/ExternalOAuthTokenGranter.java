@@ -17,6 +17,7 @@
 package com.haulmont.restapi.auth;
 
 import com.google.common.base.Preconditions;
+import com.haulmont.cuba.core.global.ClientType;
 import com.haulmont.cuba.core.global.Configuration;
 import com.haulmont.cuba.core.sys.SecurityContext;
 import com.haulmont.cuba.security.auth.AuthenticationService;
@@ -64,8 +65,11 @@ public class ExternalOAuthTokenGranter extends AbstractTokenGranter implements O
     }
 
     @Override
-    public OAuth2AccessTokenResult issueToken(String login, Locale locale, OAuth2AccessTokenRequest tokenRequest) {
+    public OAuth2AccessTokenResult issueToken(OAuth2AccessTokenRequest tokenRequest) {
         RestApiConfig config = configuration.getConfig(RestApiConfig.class);
+
+        String login = tokenRequest.getLogin();
+        Locale locale = tokenRequest.getLocale();
 
         Map<String, String> parameters = new HashMap<>();
         parameters.put("username", login);
@@ -76,7 +80,7 @@ public class ExternalOAuthTokenGranter extends AbstractTokenGranter implements O
         UserSession session;
         try {
             TrustedClientCredentials credentials = new TrustedClientCredentials(login, config.getTrustedClientPassword(), locale);
-            credentials.setRestApiAccess(true);
+            credentials.setClientType(ClientType.REST_API);
             credentials.setClientInfo("REST API");
             credentials.setParams(tokenRequest.getLoginParams());
 
@@ -107,7 +111,11 @@ public class ExternalOAuthTokenGranter extends AbstractTokenGranter implements O
 
     @Override
     public OAuth2AccessTokenResult issueToken(String login, Locale locale, Map<String, Object> loginParams) {
-        return issueToken(login, locale, new OAuth2AccessTokenRequest(loginParams));
+        OAuth2AccessTokenRequest tokenRequest = new OAuth2AccessTokenRequest();
+        tokenRequest.setLogin(login);
+        tokenRequest.setLocale(locale);
+        tokenRequest.setLoginParams(loginParams);
+        return issueToken(tokenRequest);
     }
 
     @Override

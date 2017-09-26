@@ -27,6 +27,9 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 
+/**
+ * Stores shared anonymous session instance for clients.
+ */
 @Component("cuba_AnonymousSessionHolder")
 public class AnonymousSessionHolder implements AppContext.Listener, Ordered {
 

@@ -48,7 +48,7 @@ public class LoginPasswordAuthenticationProvider extends AbstractAuthenticationP
     }
 
     @Override
-    public UserSessionDetails authenticate(Credentials credentials) throws LoginException {
+    public AuthenticationDetails authenticate(Credentials credentials) throws LoginException {
         checkUserCredentials(credentials);
 
         LoginPasswordCredentials loginAndPassword = (LoginPasswordCredentials) credentials;
@@ -73,11 +73,11 @@ public class LoginPasswordAuthenticationProvider extends AbstractAuthenticationP
 
         setClientSessionParams(loginAndPassword, session);
 
-        UserSessionDetails userSessionDetails = new SimpleUserSessionDetails(session);
+        AuthenticationDetails authenticationDetails = new SimpleAuthenticationDetails(session);
 
-        checkUserAccess(loginAndPassword, userSessionDetails);
+        checkUserAccess(loginAndPassword, authenticationDetails);
 
-        return userSessionDetails;
+        return authenticationDetails;
     }
 
     protected void checkUserCredentials(Credentials credentials) throws LoginException {
@@ -88,11 +88,11 @@ public class LoginPasswordAuthenticationProvider extends AbstractAuthenticationP
         }
     }
 
-    protected void checkUserAccess(Credentials loginAndPassword, UserSessionDetails userSessionDetails)
+    protected void checkUserAccess(Credentials loginAndPassword, AuthenticationDetails authenticationDetails)
             throws LoginException {
         if (userAccessCheckers != null) {
             for (UserAccessChecker checker : userAccessCheckers) {
-                checker.check(loginAndPassword, userSessionDetails);
+                checker.check(loginAndPassword, authenticationDetails);
             }
         }
     }

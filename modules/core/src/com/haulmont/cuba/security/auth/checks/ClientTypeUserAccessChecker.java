@@ -20,7 +20,7 @@ import com.haulmont.cuba.core.global.ClientType;
 import com.haulmont.cuba.core.global.Messages;
 import com.haulmont.cuba.security.auth.AbstractClientCredentials;
 import com.haulmont.cuba.security.auth.Credentials;
-import com.haulmont.cuba.security.auth.UserSessionDetails;
+import com.haulmont.cuba.security.auth.AuthenticationDetails;
 import com.haulmont.cuba.security.global.LoginException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +30,9 @@ import org.springframework.stereotype.Component;
 import javax.inject.Inject;
 import java.util.Locale;
 
+/**
+ * Checks if login to Desktop / Web client is permitted for user.
+ */
 @Component("cuba_ClientTypeUserAccessChecker")
 public class ClientTypeUserAccessChecker extends AbstractUserAccessChecker implements Ordered {
 
@@ -44,7 +47,7 @@ public class ClientTypeUserAccessChecker extends AbstractUserAccessChecker imple
     }
 
     @Override
-    public void check(Credentials credentials, UserSessionDetails userSessionDetails) throws LoginException {
+    public void check(Credentials credentials, AuthenticationDetails authenticationDetails) throws LoginException {
         if (credentials instanceof AbstractClientCredentials) {
             AbstractClientCredentials clientCredentials = (AbstractClientCredentials) credentials;
 
@@ -52,7 +55,7 @@ public class ClientTypeUserAccessChecker extends AbstractUserAccessChecker imple
                 ClientType clientType = clientCredentials.getClientType();
 
                 if (ClientType.DESKTOP == clientType || ClientType.WEB == clientType) {
-                    if (!userSessionDetails.getSession().isSpecificPermitted("cuba.gui.loginToClient")) {
+                    if (!authenticationDetails.getSession().isSpecificPermitted("cuba.gui.loginToClient")) {
                         log.warn("Attempt of login to {} for user '{}' without cuba.gui.loginToClient permission",
                                 clientType, clientCredentials);
 

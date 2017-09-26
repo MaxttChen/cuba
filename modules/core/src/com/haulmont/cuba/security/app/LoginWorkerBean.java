@@ -166,7 +166,7 @@ public class LoginWorkerBean implements LoginWorker {
             throws LoginException {
         LoginPasswordCredentials credentials = new LoginPasswordCredentials(login, password, locale, params);
         copyParamsToCredentials(params, credentials);
-        UserSessionDetails sessionDetails = authenticationManager.authenticate(credentials);
+        AuthenticationDetails sessionDetails = authenticationManager.authenticate(credentials);
         return sessionDetails.getSession().getUser();
     }
 

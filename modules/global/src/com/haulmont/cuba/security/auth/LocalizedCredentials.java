@@ -19,7 +19,17 @@ package com.haulmont.cuba.security.auth;
 import java.util.Locale;
 
 public interface LocalizedCredentials extends Credentials {
+    /**
+     * If passed locale should be used instead of locale of User.
+     *
+     * @return true if session should be created with passed locale.
+     */
     boolean isOverrideLocale();
 
+    /**
+     * Credentials locale
+     *
+     * @return locale
+     */
     Locale getLocale();
 }

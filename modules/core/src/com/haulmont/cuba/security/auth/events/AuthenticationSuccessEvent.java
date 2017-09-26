@@ -17,15 +17,15 @@
 package com.haulmont.cuba.security.auth.events;
 
 import com.haulmont.cuba.security.auth.Credentials;
-import com.haulmont.cuba.security.auth.UserSessionDetails;
+import com.haulmont.cuba.security.auth.AuthenticationDetails;
 import org.springframework.context.ApplicationEvent;
 
 public class AuthenticationSuccessEvent extends ApplicationEvent {
-    private final UserSessionDetails userSessionDetails;
+    private final AuthenticationDetails authenticationDetails;
 
-    public AuthenticationSuccessEvent(Credentials source, UserSessionDetails userSessionDetails) {
+    public AuthenticationSuccessEvent(Credentials source, AuthenticationDetails authenticationDetails) {
         super(source);
-        this.userSessionDetails = userSessionDetails;
+        this.authenticationDetails = authenticationDetails;
     }
 
     @Override
@@ -33,7 +33,7 @@ public class AuthenticationSuccessEvent extends ApplicationEvent {
         return (Credentials) super.getSource();
     }
 
-    public UserSessionDetails getUserSessionDetails() {
-        return userSessionDetails;
+    public AuthenticationDetails getAuthenticationDetails() {
+        return authenticationDetails;
     }
 }

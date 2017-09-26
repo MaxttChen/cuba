@@ -22,8 +22,8 @@ import com.haulmont.cuba.core.global.GlobalConfig;
 import com.haulmont.cuba.core.global.Messages;
 import com.haulmont.cuba.security.auth.AnonymousUserCredentials;
 import com.haulmont.cuba.security.auth.Credentials;
-import com.haulmont.cuba.security.auth.SimpleUserSessionDetails;
-import com.haulmont.cuba.security.auth.UserSessionDetails;
+import com.haulmont.cuba.security.auth.SimpleAuthenticationDetails;
+import com.haulmont.cuba.security.auth.AuthenticationDetails;
 import com.haulmont.cuba.security.entity.User;
 import com.haulmont.cuba.security.global.LoginException;
 import com.haulmont.cuba.security.global.UserSession;
@@ -50,7 +50,7 @@ public class AnonymousAuthenticationProvider extends AbstractAuthenticationProvi
     }
 
     @Override
-    public UserSessionDetails authenticate(Credentials credentials) throws LoginException {
+    public AuthenticationDetails authenticate(Credentials credentials) throws LoginException {
         AnonymousUserCredentials anonymous = (AnonymousUserCredentials) credentials;
 
         String login = serverConfig.getAnonymousLogin();
@@ -70,7 +70,7 @@ public class AnonymousAuthenticationProvider extends AbstractAuthenticationProvi
         UserSession session = userSessionManager.createSession(anonymousSessionId, user, userLocale, true);
         session.setClientInfo("System anonymous session");
 
-        return new SimpleUserSessionDetails(session);
+        return new SimpleAuthenticationDetails(session);
     }
 
     @Override

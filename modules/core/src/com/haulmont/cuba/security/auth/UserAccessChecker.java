@@ -18,6 +18,9 @@ package com.haulmont.cuba.security.auth;
 
 import com.haulmont.cuba.security.global.LoginException;
 
+/**
+ * Checks if user can access the system.
+ */
 public interface UserAccessChecker {
     /**
      * Defines the highest precedence for {@link org.springframework.core.Ordered} providers of the platform.
@@ -29,5 +32,12 @@ public interface UserAccessChecker {
      */
     int LOWEST_PLATFORM_PRECEDENCE = 1000;
 
-    void check(Credentials credentials, UserSessionDetails userSessionDetails) throws LoginException;
+    /**
+     * Checks if user can access the system.
+     *
+     * @param credentials           credentials
+     * @param authenticationDetails authentication details
+     * @throws LoginException if access denied
+     */
+    void check(Credentials credentials, AuthenticationDetails authenticationDetails) throws LoginException;
 }

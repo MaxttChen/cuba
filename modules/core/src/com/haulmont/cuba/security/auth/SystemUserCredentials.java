@@ -20,6 +20,9 @@ import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
 
+/**
+ * Credentials object for system-level mechanisms.
+ */
 public class SystemUserCredentials extends AbstractCredentials {
 
     private static final long serialVersionUID = 326392946916254748L;

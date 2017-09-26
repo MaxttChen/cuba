@@ -31,6 +31,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
+import java.lang.reflect.UndeclaredThrowableException;
 import java.util.List;
 import java.util.Locale;
 
@@ -49,8 +50,8 @@ public class RememberMeAuthenticationProvider extends AbstractAuthenticationProv
     }
 
     @Override
-    public UserSessionDetails authenticate(Credentials credentials) throws LoginException {
-        checkCredentials(credentials);
+    public AuthenticationDetails authenticate(Credentials credentials) throws LoginException {
+        checkUserCredentials(credentials);
 
         RememberMeCredentials rememberMe = (RememberMeCredentials) credentials;
 
@@ -75,14 +76,14 @@ public class RememberMeAuthenticationProvider extends AbstractAuthenticationProv
 
         setClientSessionParams(rememberMe, session);
 
-        UserSessionDetails userSessionDetails = new SimpleUserSessionDetails(session);
+        AuthenticationDetails authenticationDetails = new SimpleAuthenticationDetails(session);
 
-        checkAccess(rememberMe, userSessionDetails);
+        checkUserAccess(rememberMe, authenticationDetails);
 
-        return userSessionDetails;
+        return authenticationDetails;
     }
 
-    protected void checkCredentials(Credentials credentials) throws LoginException {
+    protected void checkUserCredentials(Credentials credentials) throws LoginException {
         if (userCredentialsCheckers != null) {
             for (UserCredentialsChecker checker : userCredentialsCheckers) {
                 checker.check(credentials);
@@ -90,11 +91,11 @@ public class RememberMeAuthenticationProvider extends AbstractAuthenticationProv
         }
     }
 
-    protected void checkAccess(Credentials loginAndPassword, UserSessionDetails userSessionDetails)
+    protected void checkUserAccess(Credentials loginAndPassword, AuthenticationDetails authenticationDetails)
             throws LoginException {
         if (userAccessCheckers != null) {
             for (UserAccessChecker checker : userAccessCheckers) {
-                checker.check(loginAndPassword, userSessionDetails);
+                checker.check(loginAndPassword, authenticationDetails);
             }
         }
     }

@@ -29,7 +29,6 @@ import com.haulmont.cuba.security.global.LoginException;
 import com.haulmont.cuba.security.global.NoUserSessionException;
 import com.haulmont.cuba.security.global.UserSession;
 import com.haulmont.cuba.security.sys.UserSessionManager;
-import org.apache.commons.lang.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -37,6 +36,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.persistence.NoResultException;
+import java.lang.reflect.UndeclaredThrowableException;
 import java.util.List;
 
 @Component(AuthenticationManager.NAME)
@@ -60,38 +60,38 @@ public class AuthenticationManagerBean implements AuthenticationManager {
 
     @Override
     @Nonnull
-    public UserSessionDetails login(Credentials credentials) throws LoginException {
-        UserSessionDetails userSessionDetails = null;
+    public AuthenticationDetails login(Credentials credentials) throws LoginException {
+        AuthenticationDetails authenticationDetails = null;
 
         try (Transaction tx = persistence.getTransaction()) {
             publishBeforeLoginEvent(credentials);
 
-            userSessionDetails = authenticateInternal(credentials);
+            authenticationDetails = authenticateInternal(credentials);
 
             tx.commit();
 
-            userSessionManager.clearPermissionsOnUser(userSessionDetails.getSession());
+            userSessionManager.clearPermissionsOnUser(authenticationDetails.getSession());
 
             if (credentials instanceof SyncSessionCredentials
                     && ((SyncSessionCredentials) credentials).isSyncNewUserSessionReplication()) {
                 boolean saved = clusterManager.getSyncSendingForCurrentThread();
                 clusterManager.setSyncSendingForCurrentThread(true);
                 try {
-                    userSessionManager.storeSession(userSessionDetails.getSession());
+                    userSessionManager.storeSession(authenticationDetails.getSession());
                 } finally {
                     clusterManager.setSyncSendingForCurrentThread(saved);
                 }
             } else {
-                userSessionManager.storeSession(userSessionDetails.getSession());
+                userSessionManager.storeSession(authenticationDetails.getSession());
             }
 
-            log.info("Logged in: {}", userSessionDetails.getSession());
+            log.info("Logged in: {}", authenticationDetails.getSession());
 
-            publishUserLoggedInEvent(userSessionDetails.getSession());
+            publishUserLoggedInEvent(authenticationDetails.getSession());
 
-            return userSessionDetails;
+            return authenticationDetails;
         } finally {
-            UserSession userSession = userSessionDetails != null ? userSessionDetails.getSession() : null;
+            UserSession userSession = authenticationDetails != null ? authenticationDetails.getSession() : null;
 
             publishAfterLoginEvent(credentials, userSession);
         }
@@ -99,13 +99,15 @@ public class AuthenticationManagerBean implements AuthenticationManager {
 
     @Override
     @Nonnull
-    public UserSessionDetails authenticate(Credentials credentials) throws LoginException {
+    public AuthenticationDetails authenticate(Credentials credentials) throws LoginException {
         try (Transaction tx = persistence.getTransaction()) {
-            UserSessionDetails userSessionDetails = authenticateInternal(credentials);
+            AuthenticationDetails authenticationDetails = authenticateInternal(credentials);
 
             tx.commit();
 
-            return userSessionDetails;
+            userSessionManager.clearPermissionsOnUser(authenticationDetails.getSession());
+
+            return authenticationDetails;
         }
     }
 
@@ -156,12 +158,12 @@ public class AuthenticationManagerBean implements AuthenticationManager {
         }
     }
 
-    protected UserSessionDetails authenticateInternal(Credentials credentials) throws LoginException {
+    protected AuthenticationDetails authenticateInternal(Credentials credentials) throws LoginException {
         publishBeforeAuthenticationEvent(credentials);
 
         Class<? extends Credentials> credentialsClass = credentials.getClass();
 
-        UserSessionDetails details = null;
+        AuthenticationDetails details = null;
         try {
             for (AuthenticationProvider provider : getProviders()) {
                 if (!provider.supports(credentialsClass)) {
@@ -228,7 +230,7 @@ public class AuthenticationManagerBean implements AuthenticationManager {
     protected void publishBeforeLoginEvent(Credentials credentials) throws LoginException {
         try {
             events.publish(new BeforeLoginEvent(credentials));
-        } catch (RuntimeException e) {
+        } catch (UndeclaredThrowableException e) {
             rethrowLoginException(e);
         }
     }
@@ -236,13 +238,13 @@ public class AuthenticationManagerBean implements AuthenticationManager {
     protected void publishBeforeAuthenticationEvent(Credentials credentials) throws LoginException {
         try {
             events.publish(new BeforeAuthenticationEvent(credentials));
-        } catch (RuntimeException e) {
+        } catch (UndeclaredThrowableException e) {
             rethrowLoginException(e);
         }
     }
 
     protected void rethrowLoginException(RuntimeException e) throws LoginException {
-        Throwable cause = ExceptionUtils.getCause(e);
+        Throwable cause = e.getCause();
         if (cause instanceof LoginException) {
             throw (LoginException) cause;
         } else {
@@ -250,21 +252,30 @@ public class AuthenticationManagerBean implements AuthenticationManager {
         }
     }
 
-    protected void publishAfterAuthenticationEvent(Credentials credentials, UserSessionDetails userSessionDetails)
+    protected void publishAfterAuthenticationEvent(Credentials credentials, AuthenticationDetails authenticationDetails)
             throws LoginException {
         try {
-            events.publish(new AfterAuthenticationEvent(credentials, userSessionDetails));
-        } catch (RuntimeException e) {
+            events.publish(new AfterAuthenticationEvent(credentials, authenticationDetails));
+        } catch (UndeclaredThrowableException e) {
             rethrowLoginException(e);
         }
     }
 
-    protected void publishAuthenticationFailed(Credentials credentials, AuthenticationProvider provider, LoginException e) {
-        events.publish(new AuthenticationFailureEvent(credentials, provider, e));
+    protected void publishAuthenticationFailed(Credentials credentials, AuthenticationProvider provider,
+                                               LoginException e) throws LoginException {
+        try {
+            events.publish(new AuthenticationFailureEvent(credentials, provider, e));
+        } catch (UndeclaredThrowableException re) {
+            rethrowLoginException(re);
+        }
     }
 
-    protected void publishAuthenticationSuccess(UserSessionDetails details, Credentials credentials) {
-        events.publish(new AuthenticationSuccessEvent(credentials, details));
+    protected void publishAuthenticationSuccess(AuthenticationDetails details, Credentials credentials) throws LoginException {
+        try {
+            events.publish(new AuthenticationSuccessEvent(credentials, details));
+        } catch (UndeclaredThrowableException re) {
+            rethrowLoginException(re);
+        }
     }
 
     protected void publishUserLoggedOut(UserSession session) {

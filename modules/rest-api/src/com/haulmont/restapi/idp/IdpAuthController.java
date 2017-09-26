@@ -194,9 +194,11 @@ public class IdpAuthController implements InitializingBean {
         }
 
         OAuthTokenIssuer.OAuth2AccessTokenRequest tokenRequest = new OAuthTokenIssuer.OAuth2AccessTokenRequest();
+        tokenRequest.setLogin(idpSession.getLogin());
+        tokenRequest.setLocale(locale);
         tokenRequest.setTokenDetails(ImmutableMap.of(IDP_SESSION_ID_TOKEN_ATTRIBUTE, idpSession.getId()));
 
-        return oAuthTokenIssuer.issueToken(idpSession.getLogin(), locale, tokenRequest);
+        return oAuthTokenIssuer.issueToken(tokenRequest);
     }
 
     @Nullable

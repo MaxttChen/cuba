@@ -19,7 +19,7 @@ package com.haulmont.cuba.security.auth.checks;
 import com.haulmont.cuba.core.global.Messages;
 import com.haulmont.cuba.security.auth.AbstractClientCredentials;
 import com.haulmont.cuba.security.auth.Credentials;
-import com.haulmont.cuba.security.auth.UserSessionDetails;
+import com.haulmont.cuba.security.auth.AuthenticationDetails;
 import com.haulmont.cuba.security.global.IpMatcher;
 import com.haulmont.cuba.security.global.LoginException;
 import com.haulmont.cuba.security.global.UserSession;
@@ -41,7 +41,7 @@ public class IpMaskUserAccessChecker extends AbstractUserAccessChecker implement
     }
 
     @Override
-    public void check(Credentials credentials, UserSessionDetails userSessionDetails) throws LoginException {
+    public void check(Credentials credentials, AuthenticationDetails authenticationDetails) throws LoginException {
         if (credentials instanceof AbstractClientCredentials) {
             AbstractClientCredentials clientCredentials = (AbstractClientCredentials) credentials;
 
@@ -49,7 +49,7 @@ public class IpMaskUserAccessChecker extends AbstractUserAccessChecker implement
                     && clientCredentials.getIpAddress() != null) {
                 String ipAddress = clientCredentials.getIpAddress();
 
-                UserSession session = userSessionDetails.getSession();
+                UserSession session = authenticationDetails.getSession();
                 if (session.getUser().getIpMask() != null) {
                     IpMatcher ipMatcher = new IpMatcher(session.getUser().getIpMask());
                     if (!ipMatcher.match(ipAddress)) {
