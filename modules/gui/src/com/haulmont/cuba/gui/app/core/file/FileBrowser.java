@@ -65,10 +65,6 @@ public class FileBrowser extends AbstractLookup {
                     }
                 }));
 
-        if (!security.isEntityOpPermitted(FileDescriptor.class, EntityOp.CREATE)) {
-            multiUploadBtn.setEnabled(false);
-        }
-
         multiUploadBtn.setAction(new BaseAction("multiupload")
                 .withCaption(getMessage("multiupload"))
                 .withHandler(event -> {
@@ -86,5 +82,9 @@ public class FileBrowser extends AbstractLookup {
                         }
                     });
                 }));
+
+        if (!security.isEntityOpPermitted(FileDescriptor.class, EntityOp.CREATE)) {
+            multiUploadBtn.setEnabled(false);
+        }
     }
 }
