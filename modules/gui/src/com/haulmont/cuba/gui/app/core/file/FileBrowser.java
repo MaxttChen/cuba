@@ -17,6 +17,7 @@
 package com.haulmont.cuba.gui.app.core.file;
 
 import com.haulmont.cuba.core.entity.FileDescriptor;
+import com.haulmont.cuba.core.global.Security;
 import com.haulmont.cuba.gui.WindowManager.OpenType;
 import com.haulmont.cuba.gui.components.AbstractLookup;
 import com.haulmont.cuba.gui.components.Button;
@@ -27,6 +28,7 @@ import com.haulmont.cuba.gui.components.actions.ItemTrackingAction;
 import com.haulmont.cuba.gui.data.CollectionDatasource;
 import com.haulmont.cuba.gui.data.impl.DatasourceImplementation;
 import com.haulmont.cuba.gui.export.ExportDisplay;
+import com.haulmont.cuba.security.entity.EntityOp;
 
 import javax.inject.Inject;
 import java.util.Collection;
@@ -47,6 +49,9 @@ public class FileBrowser extends AbstractLookup {
     @Inject
     protected ExportDisplay exportDisplay;
 
+    @Inject
+    protected Security security;
+
     @Override
     public void init(Map<String, Object> params) {
         super.init(params);
@@ -59,6 +64,10 @@ public class FileBrowser extends AbstractLookup {
                         exportDisplay.show(fileDescriptor, null);
                     }
                 }));
+
+        if (!security.isEntityOpPermitted(FileDescriptor.class, EntityOp.CREATE)) {
+            multiUploadBtn.setEnabled(false);
+        }
 
         multiUploadBtn.setAction(new BaseAction("multiupload")
                 .withCaption(getMessage("multiupload"))
