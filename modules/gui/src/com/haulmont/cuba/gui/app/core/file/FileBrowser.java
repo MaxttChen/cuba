@@ -65,7 +65,7 @@ public class FileBrowser extends AbstractLookup {
                     }
                 }));
 
-        multiUploadBtn.setAction(new BaseAction("multiupload")
+        BaseAction multiUploadAction = new BaseAction("multiupload")
                 .withCaption(getMessage("multiupload"))
                 .withHandler(event -> {
                     Window window = openWindow("multiuploadDialog", OpenType.DIALOG);
@@ -81,10 +81,9 @@ public class FileBrowser extends AbstractLookup {
                             filesTable.requestFocus();
                         }
                     });
-                }));
+                });
 
-        if (!security.isEntityOpPermitted(FileDescriptor.class, EntityOp.CREATE)) {
-            multiUploadBtn.setEnabled(false);
-        }
+        multiUploadAction.setEnabled(security.isEntityOpPermitted(FileDescriptor.class, EntityOp.CREATE));
+        multiUploadBtn.setAction(multiUploadAction);
     }
 }
