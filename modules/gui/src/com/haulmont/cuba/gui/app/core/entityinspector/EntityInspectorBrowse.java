@@ -40,6 +40,8 @@ import com.haulmont.cuba.gui.data.impl.DsContextImplementation;
 import com.haulmont.cuba.gui.export.ByteArrayDataProvider;
 import com.haulmont.cuba.gui.export.ExportDisplay;
 import com.haulmont.cuba.gui.export.ExportFormat;
+import com.haulmont.cuba.gui.icons.CubaIcons;
+import com.haulmont.cuba.gui.icons.Icons;
 import com.haulmont.cuba.gui.theme.ThemeConstants;
 import com.haulmont.cuba.gui.upload.FileUploadingAPI;
 import com.haulmont.cuba.gui.xml.layout.ComponentsFactory;
@@ -116,6 +118,9 @@ public class EntityInspectorBrowse extends AbstractLookup {
 
     @Inject
     protected ThemeConstants themeConstants;
+
+    @Inject
+    protected Icons icons;
 
     protected Filter filter;
     protected Table entitiesTable;
@@ -308,7 +313,7 @@ public class EntityInspectorBrowse extends AbstractLookup {
         CreateAction createAction = new CreateAction();
         table.addAction(createAction);
         createButton.setAction(createAction);
-        createButton.setIcon(themeConstants.get("actions.Create.icon"));
+        createButton.setIcon(icons.get(CubaIcons.CREATE_ACTION));
         createButton.setFrame(frame);
 
         editButton = componentsFactory.createComponent(Button.class);
@@ -316,7 +321,7 @@ public class EntityInspectorBrowse extends AbstractLookup {
         EditAction editAction = new EditAction();
         table.addAction(editAction);
         editButton.setAction(editAction);
-        editButton.setIcon(themeConstants.get("actions.Edit.icon"));
+        editButton.setIcon(icons.get(CubaIcons.EDIT_ACTION));
         editButton.setFrame(frame);
 
         removeButton = componentsFactory.createComponent(Button.class);
@@ -325,19 +330,19 @@ public class EntityInspectorBrowse extends AbstractLookup {
         removeAction.setAfterRemoveHandler(removedItems -> entitiesDs.refresh());
         table.addAction(removeAction);
         removeButton.setAction(removeAction);
-        removeButton.setIcon(themeConstants.get("actions.Remove.icon"));
+        removeButton.setIcon(icons.get(CubaIcons.REMOVE_ACTION));
         removeButton.setFrame(frame);
 
         excelButton = componentsFactory.createComponent(Button.class);
         excelButton.setCaption(messages.getMessage(EntityInspectorBrowse.class, "excel"));
         excelButton.setAction(new ExcelAction(entitiesTable));
-        excelButton.setIcon(themeConstants.get("actions.Excel.icon"));
+        excelButton.setIcon(icons.get(CubaIcons.EXCEL_ACTION));
         excelButton.setFrame(frame);
 
         refreshButton = componentsFactory.createComponent(Button.class);
         refreshButton.setCaption(messages.getMessage(EntityInspectorBrowse.class, "refresh"));
         refreshButton.setAction(new RefreshAction(entitiesTable));
-        refreshButton.setIcon(themeConstants.get("actions.Refresh.icon"));
+        refreshButton.setIcon(icons.get(CubaIcons.REFRESH_ACTION));
         refreshButton.setFrame(frame);
 
         exportPopupButton = componentsFactory.createComponent(PopupButton.class);

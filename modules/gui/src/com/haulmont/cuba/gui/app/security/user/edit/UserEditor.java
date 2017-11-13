@@ -36,6 +36,8 @@ import com.haulmont.cuba.gui.data.DsContext;
 import com.haulmont.cuba.gui.data.impl.AbstractDatasource;
 import com.haulmont.cuba.gui.data.impl.DatasourceImplementation;
 import com.haulmont.cuba.gui.events.UserSubstitutionsChangedEvent;
+import com.haulmont.cuba.gui.icons.CubaIcons;
+import com.haulmont.cuba.gui.icons.Icons;
 import com.haulmont.cuba.gui.theme.ThemeConstants;
 import com.haulmont.cuba.gui.xml.layout.ComponentsFactory;
 import com.haulmont.cuba.security.entity.*;
@@ -76,6 +78,9 @@ public class UserEditor extends AbstractEditor<User> {
 
     @Inject
     protected FieldGroup fieldGroupRight;
+
+    @Inject
+    protected Icons icons;
 
     protected PasswordField passwField;
     protected PasswordField confirmPasswField;
@@ -442,7 +447,7 @@ public class UserEditor extends AbstractEditor<User> {
         public AddRoleAction() {
             super("add");
 
-            icon = themeConstants.get("actions.Add.icon");
+            icon = icons.get(CubaIcons.ADD_ACTION);
 
             setCaption(getMessage("actions.Add"));
 
@@ -503,7 +508,7 @@ public class UserEditor extends AbstractEditor<User> {
         public EditRoleAction() {
             super("edit");
 
-            icon = themeConstants.get("actions.Edit.icon");
+            icon = icons.get(CubaIcons.EDIT_ACTION);
 
             setCaption(getMessage("actions.Edit"));
         }
@@ -560,7 +565,7 @@ public class UserEditor extends AbstractEditor<User> {
         public AddSubstitutedAction() {
             super("add");
 
-            icon = themeConstants.get("actions.Add.icon");
+            icon = icons.get(CubaIcons.ADD_ACTION);
 
             ClientConfig clientConfig = configuration.getConfig(ClientConfig.class);
             setShortcut(clientConfig.getTableAddShortcut());
@@ -582,7 +587,7 @@ public class UserEditor extends AbstractEditor<User> {
         public EditSubstitutedAction() {
             super("edit");
 
-            icon = themeConstants.get("actions.Edit.icon");
+            icon = icons.get(CubaIcons.EDIT_ACTION);
         }
 
         @Override
