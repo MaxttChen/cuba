@@ -22,8 +22,9 @@ import com.haulmont.cuba.gui.ComponentsHelper;
 import com.haulmont.cuba.gui.TestIdManager;
 import com.haulmont.cuba.gui.components.Component;
 import com.haulmont.cuba.gui.components.Frame;
+import com.haulmont.cuba.gui.icons.Icons;
 import com.haulmont.cuba.web.AppUI;
-import com.haulmont.cuba.web.gui.icons.IconProvider;
+import com.haulmont.cuba.web.gui.icons.IconResolver;
 import com.vaadin.server.Resource;
 import com.vaadin.server.Sizeable;
 import com.vaadin.server.UserError;
@@ -33,20 +34,15 @@ import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
 import org.dom4j.Element;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 public abstract class WebAbstractComponent<T extends com.vaadin.ui.AbstractComponent>
         extends EventRouter
         implements Component, Component.Wrapper, Component.HasXmlDescriptor, Component.BelongToFrame, Component.HasIcon,
                    Component.HasCaption {
-
-    private final Logger log = LoggerFactory.getLogger(WebAbstractComponent.class);
 
     public static final List<Sizeable.Unit> UNIT_SYMBOLS = Collections.unmodifiableList(Arrays.asList(
             Sizeable.Unit.PIXELS, Sizeable.Unit.POINTS, Sizeable.Unit.PICAS,
@@ -268,7 +264,9 @@ public abstract class WebAbstractComponent<T extends com.vaadin.ui.AbstractCompo
     public void setIcon(String icon) {
         this.icon = icon;
         if (!StringUtils.isEmpty(icon)) {
-            getComposition().setIcon(resolveIcon(icon));
+            Resource iconResource = AppBeans.get(IconResolver.class)
+                    .getIconResource(this.icon);
+            getComposition().setIcon(iconResource);
             getComposition().addStyleName(ICON_STYLE);
         } else {
             getComposition().setIcon(null);
@@ -276,18 +274,11 @@ public abstract class WebAbstractComponent<T extends com.vaadin.ui.AbstractCompo
         }
     }
 
-    protected Resource resolveIcon(String icon) {
-        Optional<IconProvider> provider = AppBeans.getAll(IconProvider.class)
-                .values().stream()
-                .filter(p -> p.canProvide(icon))
-                .findAny();
-
-        if (provider.isPresent()) {
-            return provider.get().getIconResource(this.icon);
-        }
-
-        log.warn("There is no IconProvider for the given icon: {}", icon);
-        return null;
+    @Override
+    public void setIconByName(Icons.Icon icon) {
+        String iconName = AppBeans.get(Icons.class)
+                .get(icon);
+        setIcon(iconName);
     }
 
     /**

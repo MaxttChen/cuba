@@ -25,6 +25,7 @@ import com.haulmont.cuba.gui.components.Button;
 import com.haulmont.cuba.gui.components.Component;
 import com.haulmont.cuba.gui.components.Frame;
 import com.haulmont.cuba.gui.components.*;
+import com.haulmont.cuba.gui.icons.Icons;
 import org.apache.commons.lang.StringUtils;
 
 import javax.swing.*;
@@ -506,6 +507,11 @@ public class DesktopPopupButton extends DesktopAbstractActionsHolderComponent<JB
 
         @Override
         public void setIcon(String icon) {
+        }
+
+        // just stub
+        @Override
+        public void setIconByName(Icons.Icon icon) {
         }
 
         @Override

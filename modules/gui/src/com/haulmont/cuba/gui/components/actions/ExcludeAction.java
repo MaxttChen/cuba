@@ -28,7 +28,7 @@ import com.haulmont.cuba.gui.data.CollectionDatasource;
 import com.haulmont.cuba.gui.data.Datasource;
 import com.haulmont.cuba.gui.data.NestedDatasource;
 import com.haulmont.cuba.gui.data.PropertyDatasource;
-import com.haulmont.cuba.gui.icons.CubaIcons;
+import com.haulmont.cuba.gui.icons.CubaIcon;
 import com.haulmont.cuba.gui.icons.Icons;
 import com.haulmont.cuba.security.entity.EntityAttrAccess;
 import org.springframework.context.annotation.Scope;
@@ -114,7 +114,7 @@ public class ExcludeAction extends RemoveAction {
         this.caption = messages.getMainMessage("actions.Exclude");
         this.metadata = AppBeans.get(Metadata.NAME);
 
-        this.icon = AppBeans.get(Icons.class).get(CubaIcons.EXCLUDE_ACTION);
+        this.icon = AppBeans.get(Icons.class).get(CubaIcon.EXCLUDE_ACTION);
     }
 
     @Override

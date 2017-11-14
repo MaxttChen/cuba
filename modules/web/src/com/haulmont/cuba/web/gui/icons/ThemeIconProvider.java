@@ -22,18 +22,13 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ThemeIconProvider extends AbstractIconProvider {
+public class ThemeIconProvider implements IconProvider {
     protected static final String[] THEME_PREFIXES = {"theme://", "icons/", "app/", "components/"};
 
     @Override
     public Resource getIconResource(String iconPath) {
         if (StringUtils.isEmpty(iconPath)) {
             throw new IllegalArgumentException("Icon path should not be empty");
-        }
-
-        Resource themeIcon = getIconFromTheme(iconPath);
-        if (themeIcon != null) {
-            return themeIcon;
         }
 
         return new VersionedThemeResource(iconPath);

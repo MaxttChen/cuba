@@ -20,38 +20,43 @@ public interface Icons {
     String NAME = "cuba_Icons";
 
     /**
-     * Returns full string path for icon from the given <code>IconSet</code>.
-     * <pre>
+     * Returns actual path for the given <code>icon</code> that can be used to set this icon to components.
+     * <p>
      * Example:
-     * <code>
-     * String iconPath = Icons.get(CubaIcons.CREATE);
+     * <pre><code>
+     * createButton.setIcon(Icons.get(CubaIcon.CREATE));
      * </code></pre>
      *
-     * @param icon an icon from the given <code>IconSet</code>
-     *
-     * @return icon full string path
+     * @param icon {@link Icons.Icon} instance
+     * @return actual icon path
      */
-    String get(IconSet icon);
+    String get(Icon icon);
 
     /**
-     * Returns full string path for icon with the given <code>iconName</code>.
-     * <pre>
+     * Returns actual path for the given <code>iconName</code> that can be used to set this icon to components.
+     * <p>
      * Example:
-     * <code>
-     * String iconPath = Icons.get("IMPORT");
+     * <pre><code>
+     * importButton.setIcon(Icons.get("IMPORT"));
      * </code></pre>
-     * @param iconName icon name
      *
+     * @param iconName icon name
      * @return icon full string path
      */
     String get(String iconName);
 
     /**
-     * Marker interface to mark icon enumerations - icon sets.
+     * Marker interface for special enumerations - icon sets.
      */
-    interface IconSet {
+    interface Icon {
+        /**
+         * @return icon source: "font-icon:ADD", "theme://createIcon", etc
+         */
         String id();
 
+        /**
+         * @return icon name: "ADD", "CREATE", etc
+         */
         String name();
     }
 }

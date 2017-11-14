@@ -32,7 +32,7 @@ import com.haulmont.cuba.gui.components.ListComponent;
 import com.haulmont.cuba.gui.data.CollectionDatasource;
 import com.haulmont.cuba.gui.data.Datasource;
 import com.haulmont.cuba.gui.data.PropertyDatasource;
-import com.haulmont.cuba.gui.icons.CubaIcons;
+import com.haulmont.cuba.gui.icons.CubaIcon;
 import com.haulmont.cuba.gui.icons.Icons;
 import com.haulmont.cuba.security.entity.EntityAttrAccess;
 import com.haulmont.cuba.security.entity.EntityOp;
@@ -134,7 +134,7 @@ public class RemoveAction extends ItemTrackingAction implements Action.HasBefore
         this.autocommit = autocommit;
         this.caption = messages.getMainMessage("actions.Remove");
 
-        this.icon = AppBeans.get(Icons.class).get(CubaIcons.REMOVE_ACTION);
+        this.icon = AppBeans.get(Icons.class).get(CubaIcon.REMOVE_ACTION);
 
         Configuration configuration = AppBeans.get(Configuration.NAME);
         ClientConfig config = configuration.getConfig(ClientConfig.class);

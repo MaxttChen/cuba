@@ -31,7 +31,7 @@ import com.haulmont.cuba.gui.data.CollectionDatasource;
 import com.haulmont.cuba.gui.data.Datasource;
 import com.haulmont.cuba.gui.data.NestedDatasource;
 import com.haulmont.cuba.gui.data.PropertyDatasource;
-import com.haulmont.cuba.gui.icons.CubaIcons;
+import com.haulmont.cuba.gui.icons.CubaIcon;
 import com.haulmont.cuba.gui.icons.Icons;
 import com.haulmont.cuba.security.entity.EntityAttrAccess;
 import org.springframework.context.annotation.Scope;
@@ -160,7 +160,7 @@ public class AddAction extends BaseAction implements Action.HasOpenType, Action.
         this.openType = openType;
         this.caption = messages.getMainMessage("actions.Add");
 
-        this.icon = AppBeans.get(Icons.class).get(CubaIcons.ADD_ACTION);
+        this.icon = AppBeans.get(Icons.class).get(CubaIcon.ADD_ACTION);
 
         Configuration configuration = AppBeans.get(Configuration.NAME);
         ClientConfig clientConfig = configuration.getConfig(ClientConfig.class);

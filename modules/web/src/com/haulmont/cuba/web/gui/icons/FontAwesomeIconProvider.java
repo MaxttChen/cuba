@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
-public class FontAwesomeIconProvider extends AbstractIconProvider {
+public class FontAwesomeIconProvider implements IconProvider {
     private final Logger log = LoggerFactory.getLogger(FontAwesomeIconProvider.class);
 
     protected static final String[] FONT_AWESOME_PREFIXES = {"font-icon", "font-awesome-icon"};
@@ -40,16 +40,12 @@ public class FontAwesomeIconProvider extends AbstractIconProvider {
 
         String iconName = iconPath.contains(":") ? iconPath.split(":")[1] : iconPath;
 
-        Resource themeIcon = getIconFromTheme(iconName);
-        if (themeIcon != null)
-            return themeIcon;
-
         try {
             return ((Resource) FontAwesome.class
                     .getDeclaredField(iconName)
                     .get(null));
         } catch (NoSuchFieldException | IllegalAccessException e) {
-            log.warn("Unable to find icon {} in the FontAwesome icon set.", iconName);
+            log.warn("There is no icon with name {} in the CubaIcon icon set", iconName);
         }
 
         return null;

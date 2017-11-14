@@ -16,14 +16,18 @@
 
 package com.haulmont.cuba.gui.icons;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.haulmont.bali.util.Preconditions;
-import com.haulmont.cuba.core.global.AppBeans;
 import com.haulmont.cuba.core.sys.AppContext;
 import com.haulmont.cuba.gui.theme.ThemeConstantsManager;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Component;
 
-import java.util.LinkedList;
+import javax.annotation.Nonnull;
+import javax.inject.Inject;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -31,9 +35,22 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @Component(Icons.NAME)
-public class IconsBean implements Icons {
+public class IconsImpl implements Icons {
 
-    protected List<Class<? extends IconSet>> iconSets = new LinkedList<>();
+    protected static final LoadingCache<String, String> iconsCache =
+            CacheBuilder.newBuilder()
+                    .weakKeys()
+                    .build(new CacheLoader<String, String>() {
+                        @Override
+                        public String load(@Nonnull String key) throws Exception {
+                            return resolveIcon(key);
+                        }
+                    });
+
+    @Inject
+    protected ThemeConstantsManager themeConstantsManager;
+
+    protected static List<Class<? extends Icon>> iconSets = new ArrayList<>();
 
     // (icon name -> icon path)
     protected Map<String, String> icons = new ConcurrentHashMap<>();
@@ -43,23 +60,23 @@ public class IconsBean implements Icons {
     protected ReadWriteLock lock = new ReentrantReadWriteLock();
 
     public void init() {
-        iconSets.add(CubaIcons.class);
+        iconSets.add(CubaIcon.class);
 
         String iconSetsProp = AppContext.getProperty("cuba.icons.iconSets");
         if (StringUtils.isEmpty(iconSetsProp))
             return;
 
-        String[] iconSets = iconSetsProp.split(", ");
-        for (String iconSetFqn : iconSets) {
+        String[] iconSetFqns = iconSetsProp.split(", ");
+        for (String iconSetFqn : iconSetFqns) {
             try {
                 Class<?> iconSetClass = getClass().getClassLoader()
                         .loadClass(iconSetFqn);
 
-                if (!IconSet.class.isAssignableFrom(iconSetClass))
+                if (!Icon.class.isAssignableFrom(iconSetClass))
                     continue;
 
                 //noinspection unchecked
-                this.iconSets.add((Class<? extends IconSet>) iconSetClass);
+                iconSets.add((Class<? extends Icon>) iconSetClass);
             } catch (ClassNotFoundException e) {
                 throw new RuntimeException(String.format("Unable to load icon set class: %s", iconSetFqn), e);
             }
@@ -83,7 +100,7 @@ public class IconsBean implements Icons {
     }
 
     @Override
-    public String get(IconSet icon) {
+    public String get(Icon icon) {
         Preconditions.checkNotNullArgument(icon);
 
         return get(icon.name());
@@ -95,15 +112,15 @@ public class IconsBean implements Icons {
         try {
             checkInitialized();
 
-            String themeIcon = AppBeans.get(ThemeConstantsManager.class)
-                    .getConstants().get(iconName);
+            String themeIcon = themeConstantsManager.getConstants()
+                    .get(iconName);
 
             if (StringUtils.isNotEmpty(themeIcon))
                 return themeIcon;
 
             String icon = icons.get(iconName);
             if (StringUtils.isEmpty(icon)) {
-                icon = resolveIcon(iconName);
+                icon = iconsCache.getUnchecked(iconName);
 
                 icons.put(iconName, icon);
             }
@@ -114,13 +131,13 @@ public class IconsBean implements Icons {
         }
     }
 
-    protected String resolveIcon(String iconName) {
+    protected static String resolveIcon(String iconName) {
         String iconPath = null;
 
-        for (Class<? extends IconSet> iconSet : iconSets) {
+        for (Class<? extends Icon> iconSet : iconSets) {
             try {
                 Object obj = iconSet.getDeclaredField(iconName).get(null);
-                iconPath = ((IconSet) obj).id();
+                iconPath = ((Icon) obj).id();
             } catch (IllegalAccessException | NoSuchFieldException ignored) {
             }
         }

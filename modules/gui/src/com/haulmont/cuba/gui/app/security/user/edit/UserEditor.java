@@ -36,7 +36,7 @@ import com.haulmont.cuba.gui.data.DsContext;
 import com.haulmont.cuba.gui.data.impl.AbstractDatasource;
 import com.haulmont.cuba.gui.data.impl.DatasourceImplementation;
 import com.haulmont.cuba.gui.events.UserSubstitutionsChangedEvent;
-import com.haulmont.cuba.gui.icons.CubaIcons;
+import com.haulmont.cuba.gui.icons.CubaIcon;
 import com.haulmont.cuba.gui.icons.Icons;
 import com.haulmont.cuba.gui.theme.ThemeConstants;
 import com.haulmont.cuba.gui.xml.layout.ComponentsFactory;
@@ -447,7 +447,7 @@ public class UserEditor extends AbstractEditor<User> {
         public AddRoleAction() {
             super("add");
 
-            icon = icons.get(CubaIcons.ADD_ACTION);
+            icon = icons.get(CubaIcon.ADD_ACTION);
 
             setCaption(getMessage("actions.Add"));
 
@@ -508,7 +508,7 @@ public class UserEditor extends AbstractEditor<User> {
         public EditRoleAction() {
             super("edit");
 
-            icon = icons.get(CubaIcons.EDIT_ACTION);
+            icon = icons.get(CubaIcon.EDIT_ACTION);
 
             setCaption(getMessage("actions.Edit"));
         }
@@ -565,7 +565,7 @@ public class UserEditor extends AbstractEditor<User> {
         public AddSubstitutedAction() {
             super("add");
 
-            icon = icons.get(CubaIcons.ADD_ACTION);
+            icon = icons.get(CubaIcon.ADD_ACTION);
 
             ClientConfig clientConfig = configuration.getConfig(ClientConfig.class);
             setShortcut(clientConfig.getTableAddShortcut());
@@ -587,7 +587,7 @@ public class UserEditor extends AbstractEditor<User> {
         public EditSubstitutedAction() {
             super("edit");
 
-            icon = icons.get(CubaIcons.EDIT_ACTION);
+            icon = icons.get(CubaIcon.EDIT_ACTION);
         }
 
         @Override

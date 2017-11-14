@@ -37,6 +37,7 @@ import com.haulmont.cuba.gui.components.actions.BaseAction;
 import com.haulmont.cuba.gui.data.Datasource;
 import com.haulmont.cuba.gui.data.DsContext;
 import com.haulmont.cuba.gui.events.sys.UiEventsMulticaster;
+import com.haulmont.cuba.gui.icons.Icons;
 import com.haulmont.cuba.gui.settings.Settings;
 import com.haulmont.cuba.gui.theme.ThemeConstantsManager;
 import com.haulmont.cuba.web.AppUI;
@@ -113,6 +114,7 @@ public class WebWindow implements Window, Component.Wrapper,
     protected final ActionsPermissions actionsPermissions = new ActionsPermissions(this);
 
     protected Messages messages = AppBeans.get(Messages.NAME);
+    protected Icons icons = AppBeans.get(Icons.NAME);
 
     protected boolean disposed = false;
     protected DialogOptions dialogOptions = new WebDialogOptions();
@@ -1399,6 +1401,11 @@ public class WebWindow implements Window, Component.Wrapper,
                 tabWindow.setIcon(WebComponentsHelper.getIcon(icon));
             }
         }
+    }
+
+    @Override
+    public void setIconByName(Icons.Icon icon) {
+        setIcon(icons.get(icon));
     }
 
     @Override
