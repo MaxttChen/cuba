@@ -254,6 +254,7 @@ public class AppLoginWindow extends AbstractWindow implements Window.TopLevelWin
         }
     }
 
+    // todo move to LdapAuthProvider
     /**
      * Convert userName to db form
      * In database users stores in form DOMAIN&#92;userName

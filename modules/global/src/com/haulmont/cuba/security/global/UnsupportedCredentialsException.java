@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2016 Haulmont.
+ * Copyright (c) 2008-2017 Haulmont.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,15 +12,18 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
-package com.haulmont.cuba.web;
+
+package com.haulmont.cuba.security.global;
+
+import com.haulmont.cuba.core.global.Logging;
 
 /**
- * Listener of user substitution events. See {@link com.haulmont.cuba.web.Connection}.
- *
+ * Exception that is thrown if the passed credentials is unsupported.
  */
-public interface UserSubstitutionListener {
-
-    void userSubstituted(Connection connection);
+@Logging(Logging.Type.BRIEF)
+public class UnsupportedCredentialsException extends LoginException {
+    public UnsupportedCredentialsException(String message) {
+        super(message);
+    }
 }

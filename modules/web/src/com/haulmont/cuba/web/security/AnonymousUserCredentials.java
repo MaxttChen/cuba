@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2016 Haulmont.
+ * Copyright (c) 2008-2017 Haulmont.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,15 +12,29 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
-package com.haulmont.cuba.web;
 
-import com.haulmont.cuba.security.global.LoginException;
+package com.haulmont.cuba.web.security;
 
-/**
- * Listener of connection events. See {@link com.haulmont.cuba.web.Connection}.
- */
-public interface ConnectionListener {
-    void connectionStateChanged(Connection connection) throws LoginException;
+import com.haulmont.cuba.security.auth.Credentials;
+
+import java.util.Locale;
+
+public class AnonymousUserCredentials implements Credentials {
+    private Locale locale;
+
+    public AnonymousUserCredentials() {
+    }
+
+    public AnonymousUserCredentials(Locale locale) {
+        this.locale = locale;
+    }
+
+    public Locale getLocale() {
+        return locale;
+    }
+
+    public void setLocale(Locale locale) {
+        this.locale = locale;
+    }
 }

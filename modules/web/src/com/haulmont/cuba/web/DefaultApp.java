@@ -27,6 +27,7 @@ import com.haulmont.cuba.security.global.LoginException;
 import com.haulmont.cuba.security.global.UserSession;
 import com.haulmont.cuba.web.app.loginwindow.AppLoginWindow;
 import com.haulmont.cuba.web.auth.ExternallyAuthenticatedConnection;
+import com.haulmont.cuba.web.security.AnonymousUserCredentials;
 import com.vaadin.server.*;
 import com.vaadin.ui.UI;
 import org.slf4j.Logger;
@@ -40,13 +41,15 @@ import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.Locale;
 
+import static com.haulmont.cuba.web.Connection.*;
+
 /**
  * Default {@link App} implementation that shows {@link AppLoginWindow} on start.
  * Supports SSO through external authentication.
  */
 @Component(App.NAME)
 @Scope(BeanDefinition.SCOPE_PROTOTYPE)
-public class DefaultApp extends App implements ConnectionListener, UserSubstitutionListener {
+public class DefaultApp extends App implements StateChangeListener, UserSubstitutionListener {
 
     private static final Logger log = LoggerFactory.getLogger(DefaultApp.class);
 
@@ -62,12 +65,14 @@ public class DefaultApp extends App implements ConnectionListener, UserSubstitut
     @Override
     protected Connection createConnection() {
         Connection connection = super.createConnection();
-        connection.addConnectionListener(this);
+        connection.addStateChangeListener(this);
         return connection;
     }
 
     @Override
-    public void connectionStateChanged(Connection connection) throws LoginException {
+    public void connectionStateChanged(StateChangeEvent event) {
+        Connection connection = event.getSource();
+
         log.debug("connectionStateChanged connected: {}, authenticated: {}",
                 connection.isConnected(), connection.isAuthenticated());
 
@@ -76,14 +81,11 @@ public class DefaultApp extends App implements ConnectionListener, UserSubstitut
         clearSettingsCache();
 
         if (connection.isConnected()) {
-            UserSession userSession = connection.getSession();
-            if (userSession == null) {
-                throw new IllegalStateException("Unable to obtain session from connected Connection");
-            }
+            UserSession userSession = connection.getSessionNN();
             setLocale(userSession.getLocale());
 
             // substitution listeners are cleared by connection on logout
-            connection.addSubstitutionListener(this);
+            connection.addUserSubstitutionListener(this);
 
             if (connection.isAuthenticated()
                     && !webAuthConfig.getExternalAuthentication()
@@ -125,7 +127,7 @@ public class DefaultApp extends App implements ConnectionListener, UserSubstitut
             boolean redirectedToExternalAuth = false;
 
             if (webAuthConfig.getExternalAuthentication()) {
-                String loggedOutUrl = ((ExternallyAuthenticatedConnection) connection).logoutExternalAuthentication();
+                String loggedOutUrl = connection.logoutExternalAuthentication();
                 if (!Strings.isNullOrEmpty(loggedOutUrl)) {
                     AppUI currentUi = AppUI.getCurrent();
                     // it can be null if we handle request in a custom RequestHandler
@@ -162,7 +164,11 @@ public class DefaultApp extends App implements ConnectionListener, UserSubstitut
                 Locale requestLocale = VaadinService.getCurrentRequest().getLocale();
                 setLocale(resolveLocale(requestLocale));
 
-                getConnection().loginAnonymous(getLocale());
+                try {
+                    connection.login(new AnonymousUserCredentials(getLocale()));
+                } catch (LoginException e) {
+                    throw new RuntimeException("Unable to login as anonymous!");
+                }
             }
         }
     }
@@ -213,7 +219,7 @@ public class DefaultApp extends App implements ConnectionListener, UserSubstitut
             String userName = principal.getName();
             log.debug("Trying to login after external authentication as {}", userName);
             try {
-                ((ExternallyAuthenticatedConnection) connection).loginAfterExternalAuthentication(userName, getLocale());
+                connection.loginAfterExternalAuthentication(userName, getLocale());
 
                 return true;
             } catch (LoginException e) {
@@ -228,7 +234,9 @@ public class DefaultApp extends App implements ConnectionListener, UserSubstitut
     }
 
     @Override
-    public void userSubstituted(Connection connection) {
+    public void userSubstituted(UserSubstitutedEvent event) {
+        Connection connection = event.getSource();
+
         cleanupBackgroundTasks();
         clearSettingsCache();
         closeAllWindows();

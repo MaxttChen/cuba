@@ -19,16 +19,14 @@ package com.haulmont.cuba.web;
 
 import com.haulmont.bali.util.ParamsMap;
 import com.haulmont.cuba.core.global.ClientType;
-import com.haulmont.cuba.security.auth.AbstractClientCredentials;
-import com.haulmont.cuba.security.auth.LoginPasswordCredentials;
-import com.haulmont.cuba.security.auth.RememberMeCredentials;
-import com.haulmont.cuba.security.auth.TrustedClientCredentials;
+import com.haulmont.cuba.security.auth.*;
 import com.haulmont.cuba.security.global.LoginException;
 import com.haulmont.cuba.security.global.SessionParams;
 import com.haulmont.cuba.security.global.UserSession;
 import com.haulmont.cuba.web.auth.CubaAuthProvider;
 import com.haulmont.cuba.web.auth.ExternallyAuthenticatedConnection;
 import com.haulmont.cuba.web.auth.WebAuthConfig;
+import org.apache.commons.lang.NotImplementedException;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -48,6 +46,11 @@ public class DefaultConnection extends AbstractConnection implements ExternallyA
     protected WebAuthConfig webAuthConfig;
     @Inject
     protected CubaAuthProvider authProvider;
+
+    @Override
+    public void login(Credentials credentials) throws LoginException {
+        throw new NotImplementedException("TODO"); // TODO
+    }
 
     @Override
     public void login(String login, String password, Locale locale) throws LoginException {
@@ -134,11 +137,11 @@ public class DefaultConnection extends AbstractConnection implements ExternallyA
 
         String password = webAuthConfig.getTrustedClientPassword();
         UserSession userSession = doLoginTrusted(login, password, locale, getLoginParams());
-        update(userSession, SessionMode.AUTHENTICATED, sessionInitEvent -> {
+        update(userSession, SessionMode.AUTHENTICATED/*, sessionInitEvent -> {
             UserSession session = sessionInitEvent.getUserSession();
             session.setAttribute(EXTERNAL_AUTH_USER_SESSION_ATTRIBUTE, true);
             authProvider.userSessionLoggedIn(session);
-        });
+        }*/);
     }
 
     @Override

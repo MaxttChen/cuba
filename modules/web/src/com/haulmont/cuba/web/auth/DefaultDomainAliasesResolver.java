@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2016 Haulmont.
+ * Copyright (c) 2008-2017 Haulmont.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.haulmont.cuba.web.auth;
@@ -21,8 +20,8 @@ import com.haulmont.cuba.core.global.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.springframework.stereotype.Component;
+
 import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.Map;
@@ -46,7 +45,7 @@ public class DefaultDomainAliasesResolver implements DomainAliasesResolver {
 
                     if (aliasParts == null || aliasParts.length != 2 ||
                             StringUtils.isBlank(aliasParts[0]) || StringUtils.isBlank(aliasParts[1])) {
-                        log.warn("Incorrect domain alias definition: \"" + String.valueOf(aliasDefinition) + "\"");
+                        log.warn("Incorrect domain alias definition: '{}'", aliasDefinition);
                     } else {
                         aliases.put(aliasParts[0].toLowerCase(), aliasParts[1]);
                     }
@@ -60,7 +59,7 @@ public class DefaultDomainAliasesResolver implements DomainAliasesResolver {
         String alias_lc = alias.toLowerCase();
         if (aliases.containsKey(alias_lc)) {
             String domain = aliases.get(alias_lc);
-            log.debug(String.format("Resolved domain \"%s\" from alias \"%s\"", domain, alias));
+            log.debug("Resolved domain {} from alias {}", domain, alias);
             return domain;
         } else {
             return alias;

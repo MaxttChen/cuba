@@ -17,6 +17,8 @@
 package com.haulmont.cuba.web.auth;
 
 import com.haulmont.cuba.security.global.LoginException;
+import com.haulmont.cuba.web.Connection;
+import com.haulmont.cuba.web.security.ExternalUserCredentials;
 
 import java.util.Locale;
 
@@ -34,12 +36,18 @@ public interface ExternallyAuthenticatedConnection {
      * @param locale            user locale
      * @throws LoginException   in case of unsuccessful login due to wrong credentials or other issues
      */
-    void loginAfterExternalAuthentication(String login, Locale locale) throws LoginException;
+    @Deprecated
+    default void loginAfterExternalAuthentication(String login, Locale locale) throws LoginException {
+        ((Connection) this).login(new ExternalUserCredentials(login, locale));
+    }
 
     /**
      * Logout from external authentication.
      *
+     * todo !
+     *
      * @return target url of external identity provider or null.
      */
+    @Deprecated
     String logoutExternalAuthentication();
 }

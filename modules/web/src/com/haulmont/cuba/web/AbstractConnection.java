@@ -50,7 +50,7 @@ public abstract class AbstractConnection implements Connection {
 
     private static final Logger log = LoggerFactory.getLogger(AbstractConnection.class);
 
-    protected List<ConnectionListener> connectionListeners = new ArrayList<>();
+    protected List<StateChangeListener> stateChangeListeners = new ArrayList<>();
     protected List<UserSubstitutionListener> userSubstitutionListeners = new ArrayList<>();
 
     protected boolean connected;
@@ -112,14 +112,7 @@ public abstract class AbstractConnection implements Connection {
         return true;
     }
 
-    @Override
     public void update(UserSession session, SessionMode sessionMode) throws LoginException {
-        update(session, sessionMode, null);
-    }
-
-    @Override
-    public void update(UserSession session, SessionMode sessionMode,
-                       @Nullable Consumer<UserSessionInitEvent> sessionInitializer) throws LoginException {
         LoginContextParameters lcp = getLoginContextParameters();
 
         ClientUserSession clientUserSession = new ClientUserSession(session);
@@ -130,7 +123,7 @@ public abstract class AbstractConnection implements Connection {
         connected = true;
 
         try {
-            internalLogin(clientUserSession, sessionInitializer);
+            internalLogin(clientUserSession);
         } catch (LoginException | RuntimeException e) {
             internalLogout(false);
 
@@ -156,7 +149,7 @@ public abstract class AbstractConnection implements Connection {
         this.connected = lcp.isConnected();
     }
 
-    protected void internalLogin(UserSession session, @Nullable Consumer<UserSessionInitEvent> sessionInitializer)
+    protected void internalLogin(UserSession session)
             throws LoginException {
         AppContext.setSecurityContext(new SecurityContext(session));
 
@@ -183,9 +176,9 @@ public abstract class AbstractConnection implements Connection {
             session.setTimeZone(detectTimeZone());
         }
 
-        if (sessionInitializer != null) {
+        /*if (sessionInitializer != null) {
             sessionInitializer.accept(new UserSessionInitEvent(this, session));
-        }
+        }*/
 
         fireConnectionListeners();
 
@@ -261,38 +254,38 @@ public abstract class AbstractConnection implements Connection {
     }
 
     @Override
-    public void addConnectionListener(ConnectionListener listener) {
-        if (!connectionListeners.contains(listener)) {
-            connectionListeners.add(listener);
+    public void addStateChangeListener(StateChangeListener listener) {
+        if (!stateChangeListeners.contains(listener)) {
+            stateChangeListeners.add(listener);
         }
     }
 
     @Override
-    public void removeConnectionListener(ConnectionListener listener) {
-        connectionListeners.remove(listener);
+    public void removeStateChangeListener(StateChangeListener listener) {
+        stateChangeListeners.remove(listener);
     }
 
     @Override
-    public void addSubstitutionListener(UserSubstitutionListener listener) {
+    public void addUserSubstitutionListener(UserSubstitutionListener listener) {
         if (!userSubstitutionListeners.contains(listener)) {
             userSubstitutionListeners.add(listener);
         }
     }
 
     @Override
-    public void removeSubstitutionListener(UserSubstitutionListener listener) {
+    public void removeUserSubstitutionListener(UserSubstitutionListener listener) {
         userSubstitutionListeners.remove(listener);
     }
 
     protected void fireConnectionListeners() throws LoginException {
-        for (ConnectionListener listener : new ArrayList<>(connectionListeners)) {
-            listener.connectionStateChanged(this);
+        for (StateChangeListener listener : new ArrayList<>(stateChangeListeners)) {
+            listener.connectionStateChanged(new StateChangeEvent(this));
         }
     }
 
     protected void fireSubstitutionListeners() {
         for (UserSubstitutionListener listener : new ArrayList<>(userSubstitutionListeners)) {
-            listener.userSubstituted(this);
+            listener.userSubstituted(new UserSubstitutedEvent(this));
         }
     }
 

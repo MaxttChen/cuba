@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2016 Haulmont.
+ * Copyright (c) 2008-2017 Haulmont.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.haulmont.cuba.web.auth;
@@ -30,6 +29,8 @@ import java.util.List;
 
 @Source(type = SourceType.APP)
 public interface WebAuthConfig extends Config {
+
+    // todo move to WebLdapConfig
     /**
      * @return Short/User-friendly domain aliases for login window form
      */
@@ -37,17 +38,20 @@ public interface WebAuthConfig extends Config {
     String getActiveDirectoryAliases();
 
     /**
+     * todo deprecated description
+     *
      * @return Whether to use an external authentication
      */
     @Property("cuba.web.externalAuthentication")
     @DefaultBoolean(false)
+    @Deprecated
     boolean getExternalAuthentication();
 
     /**
      * @return external authentication provider
      */
     @Property("cuba.web.externalAuthenticationProviderClass")
-    @DefaultString("com.haulmont.cuba.web.auth.LdapAuthProvider")
+    @DefaultString("com.haulmont.cuba.web.auth.NoOpAuthProvider")
     String getExternalAuthenticationProviderClass();
 
     /**
@@ -68,6 +72,8 @@ public interface WebAuthConfig extends Config {
     @DefaultString("")
     String getTrustedClientPassword();
 
+    // todo move to WebLdapConfig
+
     @Property("cuba.web.ldap.urls")
     @Factory(factory = CommaSeparatedStringListTypeFactory.class)
     List<String> getLdapUrls();
@@ -87,6 +93,8 @@ public interface WebAuthConfig extends Config {
 
     @Property("cuba.web.ldap.password")
     String getLdapPassword();
+
+    // todo move to WebIdp config
 
     /**
      * @return Base URL of IDP server, e.g. http://localhost:8080/app/idp.

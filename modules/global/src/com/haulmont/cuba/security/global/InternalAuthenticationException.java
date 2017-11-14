@@ -14,13 +14,21 @@
  * limitations under the License.
  */
 
-package com.haulmont.cuba.security.auth;
+package com.haulmont.cuba.security.global;
+
+import com.haulmont.cuba.core.global.SupportedByClient;
 
 /**
- * Exception that is thrown if there is no {@link AuthenticationProvider} that can process credentials instance.
+ * Exception that is thrown when underlying authentication mechanisms cannot process an authentication request.
  */
-public class UnsupportedCredentialsException extends RuntimeException {
-    public UnsupportedCredentialsException(String message) {
+@SupportedByClient
+public class InternalAuthenticationException extends LoginException {
+
+    public InternalAuthenticationException(String message) {
         super(message);
+    }
+
+    public InternalAuthenticationException(String message, Throwable t) {
+        super(message,t );
     }
 }

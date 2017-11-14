@@ -25,9 +25,7 @@ import com.haulmont.cuba.core.global.Events;
 import com.haulmont.cuba.core.global.UserSessionSource;
 import com.haulmont.cuba.security.auth.events.*;
 import com.haulmont.cuba.security.entity.User;
-import com.haulmont.cuba.security.global.LoginException;
-import com.haulmont.cuba.security.global.NoUserSessionException;
-import com.haulmont.cuba.security.global.UserSession;
+import com.haulmont.cuba.security.global.*;
 import com.haulmont.cuba.security.sys.UserSessionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -195,6 +193,14 @@ public class AuthenticationManagerBean implements AuthenticationManager {
                     publishAuthenticationFailed(credentials, provider, e);
 
                     throw e;
+                } catch (RuntimeException re) {
+                    InternalAuthenticationException ie =
+                            new InternalAuthenticationException("Exception is thrown by authentication provider", re);
+
+                    // publish auth fail
+                    publishAuthenticationFailed(credentials, provider, ie);
+
+                    throw ie;
                 }
             }
         } finally {
