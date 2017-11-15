@@ -16,13 +16,13 @@
 
 package com.haulmont.cuba.web.gui.icons;
 
+import com.haulmont.cuba.gui.icons.Icons;
 import com.haulmont.cuba.gui.theme.ThemeConstants;
-import com.haulmont.cuba.gui.theme.ThemeConstantsManager;
+import com.haulmont.cuba.web.App;
 import com.vaadin.server.Resource;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
@@ -34,48 +34,40 @@ public class IconResolverImpl implements IconResolver {
     private final Logger log = LoggerFactory.getLogger(IconResolverImpl.class);
 
     @Inject
-    protected ThemeConstantsManager themeConstantsManager;
+    protected Icons icons;
 
+    @Inject
     protected List<IconProvider> iconProviders;
-
-    @Autowired
-    protected IconResolverImpl(List<IconProvider> iconProviders) {
-        this.iconProviders = iconProviders;
-    }
 
     @Override
     public Resource getIconResource(String iconPath) {
-        Resource iconFromTheme = getIconFromTheme(iconPath);
-        if (iconFromTheme != null)
-            return iconFromTheme;
+        if (StringUtils.isEmpty(iconPath)) {
+            return null;
+        }
+
+        String themeIcon = getThemeIcon(processPath(iconPath));
+        if (StringUtils.isNotEmpty(themeIcon)) {
+            return getResource(themeIcon);
+        }
 
         return getResource(iconPath);
     }
 
-    protected Resource getResource(String themeIcon) {
+    protected Resource getResource(String iconPath) {
         Optional<IconProvider> provider = iconProviders.stream()
-                .filter(p -> p.canProvide(themeIcon))
+                .filter(p -> p.canProvide(iconPath))
                 .findAny();
 
         if (provider.isPresent()) {
-            return provider.get().getIconResource(themeIcon);
+            return provider.get().getIconResource(iconPath);
         }
 
-        log.warn("There is no IconProvider for the given icon: {}", themeIcon);
+        log.warn("There is no IconProvider for the given icon: {}", iconPath);
         return null;
     }
 
-    protected Resource getIconFromTheme(String iconPath) {
-        String themeIcon = getPathFromTheme(processPath(iconPath));
-
-        if (StringUtils.isEmpty(themeIcon))
-            return null;
-
-        return getResource(themeIcon);
-    }
-
-    protected String getPathFromTheme(String iconName) {
-        ThemeConstants theme = themeConstantsManager.getConstants();
+    protected String getThemeIcon(String iconName) {
+        ThemeConstants theme = App.getInstance().getThemeConstants();
 
         String themeIcon = theme.get("icons." + iconName);
 

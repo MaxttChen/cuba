@@ -16,22 +16,25 @@
 
 package com.haulmont.cuba.gui.icons;
 
+/**
+ * Default icon set. It includes FontAwesome and CUBA-specific icons.
+ */
 public enum CubaIcon implements Icons.Icon {
-    CREATE_ACTION("icons/create.png"),
-    EDIT_ACTION("icons/edit.png"),
-    REMOVE_ACTION("icons/remove.png"),
-    REFRESH_ACTION("icons/refresh.png"),
-    ADD_ACTION("icons/add.png"),
-    EXCLUDE_ACTION("icons/remove.png"),
-    EXCEL_ACTION("icons/excel.png"),
-    UNLOCK_ACTION("icons/unlock.png"),
-    BULK_EDIT_ACTION("icons/bulk-edit.png"),
+    CREATE_ACTION("font-icon:FILE_O"),
+    EDIT_ACTION("font-icon:PENCIL"),
+    REMOVE_ACTION("font-icon:TIMES"),
+    REFRESH_ACTION("font-icon:REFRESH"),
+    ADD_ACTION("font-icon:FILE_O"),
+    EXCLUDE_ACTION("font-icon:TIMES"),
+    EXCEL_ACTION("font-icon:FILE_EXCEL_O"),
+    UNLOCK_ACTION("font-icon:UNLOCK"),
+    BULK_EDIT_ACTION("font-icon:TABLE"),
 
-    OK_ACTION("icons/ok.png"),
-    CANCEL_ACTION("icons/cancel.png"),
+    OK("font-icon:CHECK"),
+    CANCEL("font-icon:BAN"),
 
-    DOWNLOAD("icons/download.png"),
-    UPLOAD("icons/upload.png"),
+    DOWNLOAD("font-icon:DOWNLOAD"),
+    UPLOAD("font-icon:UPLLOAD"),
 
     _500PX("font-icon:_500PX"),
     ADJUST("font-icon:ADJUST"),

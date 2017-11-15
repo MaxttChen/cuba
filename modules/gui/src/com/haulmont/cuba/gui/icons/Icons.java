@@ -16,15 +16,28 @@
 
 package com.haulmont.cuba.gui.icons;
 
+/**
+ * A bean that gives an ability to set icons from icon sets - {@link Icon} inheritors.
+ * <p>
+ * It automatically resolves icons from icon sets that override the default icon set - {@link CubaIcon} or icons that
+ * are overridden for a current theme in {@code theme-name-theme.properties} (e.g. halo-theme.properties) file.
+ * <p>
+ * Examples:
+ * <pre><code>
+ * excelButton.setIcon(icons.get(CubaIcon.EXCEL_ACTION));
+ *
+ * helpButton.setIcon(icons.get(CubaIcon.INFO));
+ * </code></pre>
+ */
 public interface Icons {
     String NAME = "cuba_Icons";
 
     /**
-     * Returns actual path for the given <code>icon</code> that can be used to set this icon to components.
+     * Returns icon path for the given {@link Icon} instance that can be used to set this icon to components.
      * <p>
      * Example:
      * <pre><code>
-     * createButton.setIcon(Icons.get(CubaIcon.CREATE));
+     * createButton.setIcon(icons.get(CubaIcon.CREATE));
      * </code></pre>
      *
      * @param icon {@link Icons.Icon} instance
@@ -33,14 +46,14 @@ public interface Icons {
     String get(Icon icon);
 
     /**
-     * Returns actual path for the given <code>iconName</code> that can be used to set this icon to components.
+     * Returns icon path for the given {@code iconName} that can be used to set this icon to components.
      * <p>
      * Example:
      * <pre><code>
-     * importButton.setIcon(Icons.get("IMPORT"));
+     * importButton.setIcon(icons.get("IMPORT"));
      * </code></pre>
      *
-     * @param iconName icon name
+     * @param iconName icon name that contains only uppercase letters and underscores
      * @return icon full string path
      */
     String get(String iconName);

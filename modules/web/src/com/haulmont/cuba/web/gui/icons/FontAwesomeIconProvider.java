@@ -16,8 +16,9 @@
 
 package com.haulmont.cuba.web.gui.icons;
 
-import com.haulmont.cuba.core.global.AppBeans;
-import com.haulmont.cuba.core.global.Configuration;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.haulmont.cuba.web.WebConfig;
 import com.vaadin.server.FontAwesome;
 import com.vaadin.server.Resource;
@@ -26,37 +27,57 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Nonnull;
+import javax.inject.Inject;
+
 @Component
 public class FontAwesomeIconProvider implements IconProvider {
-    private final Logger log = LoggerFactory.getLogger(FontAwesomeIconProvider.class);
+    private static final Logger log = LoggerFactory.getLogger(FontAwesomeIconProvider.class);
 
-    protected static final String[] FONT_AWESOME_PREFIXES = {"font-icon", "font-awesome-icon"};
+    protected static final String[] FONT_AWESOME_PREFIXES = {"font-icon:", "font-awesome-icon:"};
+
+    protected static final LoadingCache<String, Resource> iconsCache = CacheBuilder.newBuilder()
+            .weakKeys()
+            .build(new CacheLoader<String, Resource>() {
+                @Override
+                public Resource load(@Nonnull String iconPath) throws Exception {
+                    return getIcon(iconPath);
+                }
+            });
+
+    @Inject
+    protected WebConfig webConfig;
+
+    protected static Resource getIcon(String iconName) {
+        Resource resource = null;
+
+        try {
+            resource = ((Resource) FontAwesome.class
+                    .getDeclaredField(iconName)
+                    .get(null));
+        } catch (IllegalAccessException | NoSuchFieldException e) {
+            log.warn("There is no icon with name {} in the FontAwesome icon set", iconName);
+        }
+
+        return resource;
+    }
 
     @Override
     public Resource getIconResource(String iconPath) {
         if (StringUtils.isEmpty(iconPath)) {
-            throw new IllegalArgumentException("Icon path should not be empty");
+            return null;
         }
 
         String iconName = iconPath.contains(":") ? iconPath.split(":")[1] : iconPath;
 
-        try {
-            return ((Resource) FontAwesome.class
-                    .getDeclaredField(iconName)
-                    .get(null));
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            log.warn("There is no icon with name {} in the CubaIcon icon set", iconName);
-        }
-
-        return null;
+        return iconsCache.getUnchecked(iconName);
     }
 
     @Override
     public boolean canProvide(String iconPath) {
-        boolean useFontIcons = AppBeans.get(Configuration.class)
-                .getConfig(WebConfig.class).getUseFontIcons();
-        if (!useFontIcons)
+        if (StringUtils.isEmpty(iconPath) || !webConfig.getUseFontIcons()) {
             return false;
+        }
 
         for (String prefix : FONT_AWESOME_PREFIXES) {
             if (iconPath.startsWith(prefix)) {

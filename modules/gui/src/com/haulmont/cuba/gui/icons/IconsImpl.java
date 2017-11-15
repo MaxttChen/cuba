@@ -21,6 +21,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.haulmont.bali.util.Preconditions;
 import com.haulmont.cuba.core.sys.AppContext;
+import com.haulmont.cuba.gui.theme.ThemeConstants;
 import com.haulmont.cuba.gui.theme.ThemeConstantsManager;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Component;
@@ -29,35 +30,30 @@ import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.regex.Pattern;
 
 @Component(Icons.NAME)
 public class IconsImpl implements Icons {
+    protected final Pattern ICON_NAME_REGEX = Pattern.compile("[A-Z_]*");
 
-    protected static final LoadingCache<String, String> iconsCache =
-            CacheBuilder.newBuilder()
-                    .weakKeys()
-                    .build(new CacheLoader<String, String>() {
-                        @Override
-                        public String load(@Nonnull String key) throws Exception {
-                            return resolveIcon(key);
-                        }
-                    });
+    protected static final LoadingCache<String, String> iconsCache = CacheBuilder.newBuilder()
+            .weakKeys()
+            .build(new CacheLoader<String, String>() {
+                @Override
+                public String load(@Nonnull String key) throws Exception {
+                    return resolveIcon(key);
+                }
+            });
 
     @Inject
     protected ThemeConstantsManager themeConstantsManager;
 
     protected static List<Class<? extends Icon>> iconSets = new ArrayList<>();
 
-    // (icon name -> icon path)
-    protected Map<String, String> icons = new ConcurrentHashMap<>();
-
-    protected volatile boolean initialized;
-
     protected ReadWriteLock lock = new ReentrantReadWriteLock();
+    protected volatile boolean initialized;
 
     public void init() {
         iconSets.add(CubaIcon.class);
@@ -107,28 +103,37 @@ public class IconsImpl implements Icons {
     }
 
     @Override
-    public String get(String iconName) {
+    public String get(String icon) {
+        if (!ICON_NAME_REGEX.matcher(icon).matches())
+            throw new IllegalArgumentException("Icon name can contain only uppercase letters and underscores.");
+
         lock.readLock().lock();
         try {
             checkInitialized();
 
-            String themeIcon = themeConstantsManager.getConstants()
-                    .get(iconName);
+            String themeIcon = getThemeIcon(icon);
 
             if (StringUtils.isNotEmpty(themeIcon))
                 return themeIcon;
 
-            String icon = icons.get(iconName);
-            if (StringUtils.isEmpty(icon)) {
-                icon = iconsCache.getUnchecked(iconName);
-
-                icons.put(iconName, icon);
-            }
-
-            return icon;
+            return iconsCache.getUnchecked(icon);
         } finally {
             lock.readLock().unlock();
         }
+    }
+
+    protected String getThemeIcon(String iconName) {
+        ThemeConstants theme = themeConstantsManager.getConstants();
+
+        String icon = iconName.replace("/", ".");
+
+        String themeIcon = theme.get("icons." + icon);
+
+        if (StringUtils.isEmpty(themeIcon)) {
+            themeIcon = theme.get("cuba.web." + icon);
+        }
+
+        return themeIcon;
     }
 
     protected static String resolveIcon(String iconName) {

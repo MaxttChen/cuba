@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-package com.haulmont.cuba.web.gui.icons;
+package com.haulmont.cuba.desktop.gui.icons;
 
-import com.vaadin.server.Resource;
+import javax.swing.*;
 
 /**
- * A facade bean that is intended for resolving icon resources by the given {@code iconPath} using
- * all available {@link IconProvider} beans.
+ * A bean that is intended for resolving icon resources from {@link com.haulmont.cuba.desktop.DesktopResources}
+ * by the given {@code iconPath}.
  */
 public interface IconResolver {
     String NAME = "cuba_IconResolver";
 
     /**
-     * Returns an instance of {@link Resource} by the given {@code iconPath}.
+     * Returns an instance of {@link Icon} by the given {@code iconPath}.
      *
      * @param iconPath icon path
-     * @return {@link Resource} instance
+     * @return {@link Icon} instance
      */
-    Resource getIconResource(String iconPath);
+    Icon getIconResource(String iconPath);
 }
