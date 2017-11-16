@@ -14,21 +14,10 @@
  * limitations under the License.
  */
 
-package com.haulmont.cuba.security.global;
+package com.haulmont.cuba.security.auth;
 
-import com.haulmont.cuba.core.global.SupportedByClient;
+import java.util.TimeZone;
 
-/**
- * Exception that is thrown when underlying authentication mechanisms cannot process an authentication request.
- */
-@SupportedByClient
-public class InternalAuthenticationException extends LoginException {
-
-    public InternalAuthenticationException(String message) {
-        super(message);
-    }
-
-    public InternalAuthenticationException(String message, Throwable t) {
-        super(message, t);
-    }
+public interface TimeZoneProvider {
+    TimeZone getTimeZone();
 }

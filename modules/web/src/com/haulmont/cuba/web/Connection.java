@@ -16,6 +16,8 @@
  */
 package com.haulmont.cuba.web;
 
+import com.haulmont.cuba.core.global.AppBeans;
+import com.haulmont.cuba.core.global.PasswordEncryption;
 import com.haulmont.cuba.security.auth.Credentials;
 import com.haulmont.cuba.security.auth.LoginPasswordCredentials;
 import com.haulmont.cuba.security.auth.RememberMeCredentials;
@@ -36,11 +38,6 @@ import java.util.Locale;
 public interface Connection extends ExternallyAuthenticatedConnection {
 
     String NAME = "cuba_Connection";
-
-    enum SessionMode {
-        AUTHENTICATED,
-        ANONYMOUS
-    }
 
     /**
      * Authenticates a user, starts session and changes state of the connection.
@@ -139,6 +136,7 @@ public interface Connection extends ExternallyAuthenticatedConnection {
     /**
      * Listener of connection events. See {@link com.haulmont.cuba.web.Connection}.
      */
+    @FunctionalInterface
     interface StateChangeListener {
         void connectionStateChanged(StateChangeEvent event);
     }
@@ -146,6 +144,7 @@ public interface Connection extends ExternallyAuthenticatedConnection {
     /**
      * Listener of user substitution events. See {@link com.haulmont.cuba.web.Connection}.
      */
+    @FunctionalInterface
     interface UserSubstitutionListener {
         void userSubstituted(UserSubstitutedEvent event);
     }
@@ -182,7 +181,8 @@ public interface Connection extends ExternallyAuthenticatedConnection {
      */
     @Deprecated
     default void login(String login, String password, Locale locale) throws LoginException {
-        login(new LoginPasswordCredentials(login, password, locale));
+        PasswordEncryption passwordEncryption = AppBeans.get(PasswordEncryption.class);
+        login(new LoginPasswordCredentials(login, passwordEncryption.getPlainHash(password), locale));
     }
 
     /**

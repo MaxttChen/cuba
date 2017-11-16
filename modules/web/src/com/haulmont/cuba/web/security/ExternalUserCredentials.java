@@ -17,12 +17,16 @@
 package com.haulmont.cuba.web.security;
 
 import com.haulmont.cuba.security.auth.AbstractClientCredentials;
+import com.haulmont.cuba.security.global.UserSession;
 
 import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
 
 public class ExternalUserCredentials extends AbstractClientCredentials {
+
+    public static final String EXTERNAL_AUTH_USER_SESSION_ATTRIBUTE = "LOGGED_IN_WITH_EXTERNAL_AUTHENTICATION";
+
     private String login;
 
     public ExternalUserCredentials(String login) {
@@ -50,5 +54,16 @@ public class ExternalUserCredentials extends AbstractClientCredentials {
 
     public void setLogin(String login) {
         this.login = login;
+    }
+
+    public static boolean isLoggedInWithExternalAuth(UserSession userSession) {
+        return userSession.getAttribute(EXTERNAL_AUTH_USER_SESSION_ATTRIBUTE) != null;
+    }
+
+    @Override
+    public String toString() {
+        return "ExternalUserCredentials{" +
+                "login='" + login + '\'' +
+                '}';
     }
 }

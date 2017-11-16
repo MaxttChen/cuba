@@ -16,6 +16,7 @@
 
 package com.haulmont.cuba.web.security.providers;
 
+import com.google.common.collect.ImmutableMap;
 import com.haulmont.cuba.core.global.ClientType;
 import com.haulmont.cuba.security.auth.AuthenticationDetails;
 import com.haulmont.cuba.security.auth.AuthenticationService;
@@ -29,9 +30,15 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
-@Component("cuba_ExternalSystemLoginProvider")
-public class ExternalSystemLoginProvider implements LoginProvider {
+import static com.haulmont.cuba.web.security.ExternalUserCredentials.EXTERNAL_AUTH_USER_SESSION_ATTRIBUTE;
+
+@Component("cuba_ExternalUserLoginProvider")
+public class ExternalUserLoginProvider implements LoginProvider {
+
     @Inject
     protected AuthenticationService authenticationService;
     @Inject
@@ -41,6 +48,10 @@ public class ExternalSystemLoginProvider implements LoginProvider {
     @Override
     public AuthenticationDetails login(Credentials credentials) throws LoginException {
         ExternalUserCredentials externalUserCredentials = (ExternalUserCredentials) credentials;
+
+        if (webAuthConfig.getStandardAuthenticationUsers().contains(externalUserCredentials.getLogin())) {
+            return null;
+        }
 
         TrustedClientCredentials trustedClientCredentials = new TrustedClientCredentials(
                 externalUserCredentials.getLogin(),
@@ -54,6 +65,19 @@ public class ExternalSystemLoginProvider implements LoginProvider {
         trustedClientCredentials.setIpAddress(externalUserCredentials.getIpAddress());
         trustedClientCredentials.setOverrideLocale(externalUserCredentials.isOverrideLocale());
         trustedClientCredentials.setSyncNewUserSessionReplication(externalUserCredentials.isSyncNewUserSessionReplication());
+
+        Map<String, Serializable> sessionAttributes = ((ExternalUserCredentials) credentials).getSessionAttributes();
+        Map<String, Serializable> targetSessionAttributes;
+        if (sessionAttributes != null
+                && !sessionAttributes.isEmpty()) {
+            targetSessionAttributes = new HashMap<>();
+            targetSessionAttributes.putAll(sessionAttributes);
+            targetSessionAttributes.put(EXTERNAL_AUTH_USER_SESSION_ATTRIBUTE, true);
+        } else {
+            targetSessionAttributes = ImmutableMap.of(EXTERNAL_AUTH_USER_SESSION_ATTRIBUTE, true);
+        }
+
+        trustedClientCredentials.setSessionAttributes(targetSessionAttributes);
 
         return authenticationService.login(trustedClientCredentials);
     }

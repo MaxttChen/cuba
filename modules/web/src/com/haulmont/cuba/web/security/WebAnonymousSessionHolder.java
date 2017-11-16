@@ -51,7 +51,6 @@ public class WebAnonymousSessionHolder {
         if (!initialized) {
             synchronized (this) {
                 if (!initialized) {
-                    log.debug("Loading anonymous session");
                     initializeAnonymousSession();
                     initialized = true;
                 }
@@ -60,12 +59,12 @@ public class WebAnonymousSessionHolder {
     }
 
     protected void initializeAnonymousSession() {
-        log.debug("Initialize anonymous session");
+        log.debug("Loading anonymous session");
 
         try {
             this.session = getAnonymousSessionFromService();
 
-            log.debug("Anonymous session initialized with id {}", session.getId());
+            log.debug("Anonymous session loaded with id {}", session.getId());
         } catch (LoginException e) {
             throw new RuntimeException("Unable to obtain anonymous session from middleware", e);
         }

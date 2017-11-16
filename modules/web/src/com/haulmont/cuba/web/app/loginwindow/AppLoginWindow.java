@@ -18,19 +18,16 @@ package com.haulmont.cuba.web.app.loginwindow;
 
 import com.haulmont.bali.util.URLEncodeUtils;
 import com.haulmont.cuba.core.global.GlobalConfig;
-import com.haulmont.cuba.core.global.PasswordEncryption;
 import com.haulmont.cuba.core.global.UserSessionSource;
 import com.haulmont.cuba.gui.components.*;
 import com.haulmont.cuba.security.app.UserManagementService;
 import com.haulmont.cuba.security.entity.User;
+import com.haulmont.cuba.security.global.InternalAuthenticationException;
 import com.haulmont.cuba.security.global.LoginException;
 import com.haulmont.cuba.security.global.UserSession;
 import com.haulmont.cuba.web.App;
 import com.haulmont.cuba.web.Connection;
 import com.haulmont.cuba.web.WebConfig;
-import com.haulmont.cuba.web.auth.CubaAuthProvider;
-import com.haulmont.cuba.web.auth.DomainAliasesResolver;
-import com.haulmont.cuba.web.auth.ExternallyAuthenticatedConnection;
 import com.haulmont.cuba.web.auth.WebAuthConfig;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
@@ -89,15 +86,6 @@ public class AppLoginWindow extends AbstractWindow implements Window.TopLevelWin
     protected UserSessionSource userSessionSource;
 
     @Inject
-    protected PasswordEncryption passwordEncryption;
-
-    @Inject
-    protected DomainAliasesResolver domainAliasesResolver;
-
-    @Inject
-    protected CubaAuthProvider authProvider;
-
-    @Inject
     protected UserManagementService userManagementService;
 
     @Inject
@@ -124,8 +112,6 @@ public class AppLoginWindow extends AbstractWindow implements Window.TopLevelWin
     protected boolean loginByRememberMe = false;
 
     protected ValueChangeListener loginChangeListener;
-
-    protected Boolean bruteForceProtectionEnabled;
 
     @Override
     public void init(Map<String, Object> params) {
@@ -232,10 +218,8 @@ public class AppLoginWindow extends AbstractWindow implements Window.TopLevelWin
             return;
         }
 
-        App app = App.getInstance();
-
         if (webAuthConfig.getExternalAuthentication()) {
-            loginField.setValue(app.getPrincipal() == null ? "" : app.getPrincipal().getName());
+            loginField.setValue("");
             passwordField.setValue("");
         } else {
             String defaultUser = webConfig.getLoginDialogDefaultUser();
@@ -252,33 +236,6 @@ public class AppLoginWindow extends AbstractWindow implements Window.TopLevelWin
                 passwordField.setValue("");
             }
         }
-    }
-
-    // todo move to LdapAuthProvider
-    /**
-     * Convert userName to db form
-     * In database users stores in form DOMAIN&#92;userName
-     *
-     * @param login Login string
-     * @return login in form DOMAIN&#92;userName
-     */
-    protected String convertLoginString(String login) {
-        int slashPos = login.indexOf("\\");
-        if (slashPos >= 0) {
-            String domainAlias = login.substring(0, slashPos);
-            String domain = domainAliasesResolver.getDomainName(domainAlias).toUpperCase();
-            String userName = login.substring(slashPos + 1);
-            login = domain + "\\" + userName;
-        } else {
-            int atSignPos = login.indexOf("@");
-            if (atSignPos >= 0) {
-                String domainAlias = login.substring(atSignPos + 1);
-                String domain = domainAliasesResolver.getDomainName(domainAlias).toUpperCase();
-                String userName = login.substring(0, atSignPos);
-                login = domain + "\\" + userName;
-            }
-        }
-        return login;
     }
 
     protected void showUnhandledExceptionOnLogin(@SuppressWarnings("unused") Exception e) {
@@ -358,15 +315,8 @@ public class AppLoginWindow extends AbstractWindow implements Window.TopLevelWin
 
             if (loginByRememberMe && webConfig.getRememberMeEnabled()) {
                 doLoginByRememberMe(login, password, selectedLocale);
-            } else if (webAuthConfig.getExternalAuthentication()
-                    && !webAuthConfig.getStandardAuthenticationUsers().contains(login)) {
-                // we use resolved locale for error messages
-                // try to login as externally authenticated user, fallback to regular authentication if enabled
-                authenticateExternally(login, password, selectedLocale);
-                login = convertLoginString(login);
-                ((ExternallyAuthenticatedConnection) connection).loginAfterExternalAuthentication(login, selectedLocale);
             } else {
-                doLogin(login, passwordEncryption.getPlainHash(password), selectedLocale);
+                doLogin(login, password, selectedLocale);
             }
 
             // locale could be set on the server
@@ -377,6 +327,10 @@ public class AppLoginWindow extends AbstractWindow implements Window.TopLevelWin
                     app.addCookie(App.COOKIE_LOCALE, loggedInLocale.toLanguageTag());
                 }
             }
+        } catch (InternalAuthenticationException e) {
+            log.error("Internal error during login", e);
+
+            showUnhandledExceptionOnLogin(e);
         } catch (LoginException e) {
             log.info("Login failed: {}", e.toString());
 
@@ -399,10 +353,6 @@ public class AppLoginWindow extends AbstractWindow implements Window.TopLevelWin
         App app = App.getInstance();
 
         app.getConnection().loginByRememberMe(login, rememberMeToken, locale);
-    }
-
-    protected void authenticateExternally(String login, String passwordValue, Locale locale) throws LoginException {
-        authProvider.authenticate(login, passwordValue, locale);
     }
 
     @Deprecated

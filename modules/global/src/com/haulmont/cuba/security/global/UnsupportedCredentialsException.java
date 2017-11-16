@@ -17,11 +17,13 @@
 package com.haulmont.cuba.security.global;
 
 import com.haulmont.cuba.core.global.Logging;
+import com.haulmont.cuba.core.global.SupportedByClient;
 
 /**
- * Exception that is thrown if the passed credentials is unsupported.
+ * Exception that is thrown if the passed credentials class is unsupported.
  */
 @Logging(Logging.Type.BRIEF)
+@SupportedByClient
 public class UnsupportedCredentialsException extends LoginException {
     public UnsupportedCredentialsException(String message) {
         super(message);

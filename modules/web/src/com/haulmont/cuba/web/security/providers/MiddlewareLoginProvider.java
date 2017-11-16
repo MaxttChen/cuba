@@ -22,9 +22,11 @@ import com.haulmont.cuba.web.security.LoginProvider;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Nullable;
+import javax.inject.Inject;
 
 @Component("cuba_MiddlewareLoginProvider")
 public class MiddlewareLoginProvider implements LoginProvider {
+    @Inject
     protected AuthenticationService authenticationService;
 
     @Nullable

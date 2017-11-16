@@ -18,6 +18,7 @@
 package com.haulmont.cuba.web;
 
 import com.haulmont.cuba.core.global.AppBeans;
+import com.haulmont.cuba.core.global.Events;
 import com.haulmont.cuba.core.global.GlobalConfig;
 import com.haulmont.cuba.core.global.MessageTools;
 import com.haulmont.cuba.gui.components.Frame;
@@ -28,20 +29,20 @@ import com.haulmont.cuba.gui.settings.SettingsClient;
 import com.haulmont.cuba.gui.theme.ThemeConstants;
 import com.haulmont.cuba.gui.theme.ThemeConstantsRepository;
 import com.haulmont.cuba.security.app.UserSessionService;
+import com.haulmont.cuba.security.global.LoginException;
 import com.haulmont.cuba.security.global.NoUserSessionException;
 import com.haulmont.cuba.security.global.UserSession;
-import com.haulmont.cuba.web.auth.CubaAuthProvider;
-import com.haulmont.cuba.web.sys.RequestContext;
 import com.haulmont.cuba.web.auth.WebAuthConfig;
 import com.haulmont.cuba.web.controllers.ControllerUtils;
 import com.haulmont.cuba.web.exception.ExceptionHandlers;
 import com.haulmont.cuba.web.log.AppLog;
+import com.haulmont.cuba.web.security.events.SessionHeartbeatEvent;
 import com.haulmont.cuba.web.settings.WebSettingsClient;
 import com.haulmont.cuba.web.sys.AppCookies;
 import com.haulmont.cuba.web.sys.BackgroundTaskManager;
 import com.haulmont.cuba.web.sys.LinkHandler;
+import com.haulmont.cuba.web.sys.RequestContext;
 import com.vaadin.server.AbstractClientConnector;
-import com.vaadin.server.ErrorHandler;
 import com.vaadin.server.VaadinServlet;
 import com.vaadin.server.VaadinSession;
 import com.vaadin.ui.UI;
@@ -54,7 +55,6 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
-import java.security.Principal;
 import java.util.*;
 import java.util.concurrent.Future;
 
@@ -113,15 +113,13 @@ public abstract class App {
     protected SettingsClient settingsClient;
 
     @Inject
-    protected CubaAuthProvider authProvider;
+    protected Events events;
 
     protected AppCookies cookies;
 
     protected LinkHandler linkHandler;
 
     protected BackgroundTaskManager backgroundTaskManager = new BackgroundTaskManager();
-
-    protected Principal principal;
 
     protected String webResourceTimestamp = "DEBUG";
 
@@ -208,7 +206,7 @@ public abstract class App {
         return list;
     }
 
-    public abstract boolean loginOnStart();
+    public abstract boolean loginOnStart() throws LoginException;
 
     protected Connection createConnection() {
         return AppBeans.getPrototype(Connection.NAME);
@@ -224,7 +222,7 @@ public abstract class App {
         vSession.setLocale(messageTools.getDefaultLocale());
 
         // set root error handler for all session
-        vSession.setErrorHandler((ErrorHandler) event -> {
+        vSession.setErrorHandler(event -> {
             try {
                 getExceptionHandlers().handle(event);
                 getAppLog().log(event);
@@ -256,10 +254,6 @@ public abstract class App {
         // get default locale from config
         Locale targetLocale = resolveLocale(requestLocale);
         setLocale(targetLocale);
-
-        if (webAuthConfig.getExternalAuthentication()) {
-            principal = RequestContext.get().getRequest().getUserPrincipal();
-        }
     }
 
     protected Locale resolveLocale(@Nullable Locale requestLocale) {
@@ -320,8 +314,6 @@ public abstract class App {
      * @param topLevelWindowId target top level window id
      */
     public void navigateTo(String topLevelWindowId) {
-        // todo artamonov we need to stop background tasks, timers and free resources
-
         WebWindowManager wm = AppBeans.getPrototype(WebWindowManager.NAME);
         wm.setUi(AppUI.getCurrent());
 
@@ -338,7 +330,7 @@ public abstract class App {
         boolean sessionIsAlive = false;
         if (connection.isAuthenticated()) {
             // Ping middleware session if connected and show messages
-            log.debug("Ping session");
+            log.debug("Ping middleware session");
 
             try {
                 String message = userSessionService.getMessages();
@@ -357,25 +349,7 @@ public abstract class App {
         }
 
         if (sessionIsAlive) {
-            pingExternalAuthentication();
-        }
-    }
-
-    public void pingExternalAuthentication() {
-        if (getConnection().isConnected() && connection.isAuthenticated()) {
-            try {
-                // Ping external authentication
-                if (webAuthConfig.getExternalAuthentication()) {
-                    UserSession session = getConnection().getSession();
-                    if (session != null) {
-                        authProvider.pingUserSession(session);
-                    }
-                }
-            } catch (NoUserSessionException ignored) {
-                // ignore no user session exception
-            } catch (Exception e) {
-                log.warn("Exception while external authenticated session ping", e);
-            }
+            events.publish(new SessionHeartbeatEvent(this));
         }
     }
 
@@ -451,10 +425,6 @@ public abstract class App {
         cookies.removeCookie(name);
     }
 
-    public Principal getPrincipal() {
-        return principal;
-    }
-
     public Locale getLocale() {
         return VaadinSession.getCurrent().getLocale();
     }
@@ -486,6 +456,7 @@ public abstract class App {
 
     public String getClientAddress() {
         if (clientAddress == null) {
+            // todo load on App creation, request is unavailable from background threads
             HttpServletRequest request = RequestContext.get().getRequest();
             String xForwardedFor = request.getHeader("X_FORWARDED_FOR");
             if (!StringUtils.isBlank(xForwardedFor)) {

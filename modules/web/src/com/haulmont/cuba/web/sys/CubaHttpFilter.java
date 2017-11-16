@@ -21,8 +21,10 @@ import com.haulmont.cuba.core.global.Configuration;
 import com.haulmont.cuba.web.WebConfig;
 import com.haulmont.cuba.web.auth.CubaAuthProvider;
 import com.haulmont.cuba.web.auth.WebAuthConfig;
+import com.haulmont.cuba.web.security.HttpRequestFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.annotation.AnnotationAwareOrderComparator;
 import org.springframework.web.filter.CompositeFilter;
 
 import javax.servlet.*;
@@ -32,28 +34,45 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class CubaHttpFilter extends CompositeFilter implements Filter {
     private final Logger log = LoggerFactory.getLogger(CubaHttpFilter.class);
 
     protected List<String> bypassUrls = new ArrayList<>();
 
-    protected CubaAuthProvider authProvider;
-
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
         Configuration configuration = AppBeans.get(Configuration.NAME);
+        // Fill bypassUrls
+        WebConfig webConfig = configuration.getConfig(WebConfig.class);
+        bypassUrls.addAll(webConfig.getCubaHttpFilterBypassUrls());
+
+        List<Filter> filters = new ArrayList<>();
+
         if (configuration.getConfig(WebAuthConfig.class).getExternalAuthentication()) {
             try {
-                authProvider = AppBeans.get(CubaAuthProvider.NAME);
-                authProvider.init(filterConfig);
+                CubaAuthProvider authProvider = AppBeans.get(CubaAuthProvider.NAME);
+                filters.add(authProvider);
             } catch (Exception e) {
                 throw new ServletException(e);
             }
-            // Fill bypassUrls
-            WebConfig webConfig = configuration.getConfig(WebConfig.class);
-            bypassUrls.addAll(webConfig.getCubaHttpFilterBypassUrls());
         }
+
+        filters.addAll(getHttpRequestFilterBeans());
+
+        setFilters(filters);
+
+        super.init(filterConfig);
+    }
+
+    protected List<HttpRequestFilter> getHttpRequestFilterBeans() {
+        Map<String, HttpRequestFilter> beanFilters = AppBeans.getAll(HttpRequestFilter.class);
+        List<HttpRequestFilter> availableFilters = new ArrayList<>(beanFilters.values());
+
+        AnnotationAwareOrderComparator.sort(availableFilters);
+
+        return availableFilters;
     }
 
     @Override
@@ -71,23 +90,12 @@ public class CubaHttpFilter extends CompositeFilter implements Filter {
         }
         for (String bypassUrl : bypassUrls) {
             if (requestURI.contains(bypassUrl)) {
-                log.debug("Skip URL check: {}", bypassUrl);
+                log.trace("Skip URL check: {}", bypassUrl);
                 chain.doFilter(servletRequest, servletResponse);
                 return;
             }
         }
 
-        if (authProvider != null) {
-            authProvider.doFilter(request, response, chain);
-        } else {
-            chain.doFilter(request, response);
-        }
-    }
-
-    @Override
-    public void destroy() {
-        if (authProvider != null) {
-            authProvider.destroy();
-        }
+        super.doFilter(request, response, chain);
     }
 }

@@ -14,19 +14,20 @@
  * limitations under the License.
  */
 
-package com.haulmont.cuba.security.auth.events;
+package com.haulmont.cuba.web.security.events;
 
-import com.haulmont.cuba.security.auth.Credentials;
 import com.haulmont.cuba.security.auth.AuthenticationDetails;
+import com.haulmont.cuba.security.auth.Credentials;
+import com.haulmont.cuba.security.global.UserSession;
 import org.springframework.context.ApplicationEvent;
 
 import javax.annotation.Nullable;
 
-public class AfterAuthenticationEvent extends ApplicationEvent {
+public class AfterLoginEvent extends ApplicationEvent {
 
-    protected final AuthenticationDetails authenticationDetails;
+    private final AuthenticationDetails authenticationDetails;
 
-    public AfterAuthenticationEvent(Credentials source, @Nullable AuthenticationDetails authenticationDetails) {
+    public AfterLoginEvent(Credentials source, @Nullable AuthenticationDetails authenticationDetails) {
         super(source);
         this.authenticationDetails = authenticationDetails;
     }
@@ -38,6 +39,11 @@ public class AfterAuthenticationEvent extends ApplicationEvent {
 
     public Credentials getCredentials() {
         return (Credentials) super.getSource();
+    }
+
+    @Nullable
+    public UserSession getUserSession() {
+        return authenticationDetails != null ? authenticationDetails.getSession() : null;
     }
 
     @Nullable

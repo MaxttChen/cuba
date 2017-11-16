@@ -27,8 +27,6 @@ import java.util.Locale;
  */
 public interface ExternallyAuthenticatedConnection {
 
-    String EXTERNAL_AUTH_USER_SESSION_ATTRIBUTE = "LOGGED_IN_WITH_EXTERNAL_AUTHENTICATION";
-
     /**
      * Log in to the system after external authentication.
      *
@@ -44,10 +42,10 @@ public interface ExternallyAuthenticatedConnection {
     /**
      * Logout from external authentication.
      *
-     * todo !
-     *
      * @return target url of external identity provider or null.
      */
     @Deprecated
-    String logoutExternalAuthentication();
+    default String logoutExternalAuthentication() {
+        return null; // do nothing
+    }
 }

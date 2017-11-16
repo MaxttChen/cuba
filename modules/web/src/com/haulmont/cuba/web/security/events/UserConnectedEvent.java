@@ -14,21 +14,23 @@
  * limitations under the License.
  */
 
-package com.haulmont.cuba.security.global;
+package com.haulmont.cuba.web.security.events;
 
-import com.haulmont.cuba.core.global.SupportedByClient;
+import com.haulmont.cuba.web.Connection;
+import org.springframework.context.ApplicationEvent;
 
-/**
- * Exception that is thrown when underlying authentication mechanisms cannot process an authentication request.
- */
-@SupportedByClient
-public class InternalAuthenticationException extends LoginException {
+public class UserConnectedEvent extends ApplicationEvent {
 
-    public InternalAuthenticationException(String message) {
-        super(message);
+    public UserConnectedEvent(Connection source) {
+        super(source);
     }
 
-    public InternalAuthenticationException(String message, Throwable t) {
-        super(message, t);
+    @Override
+    public Connection getSource() {
+        return (Connection) super.getSource();
+    }
+
+    public Connection getConnection() {
+        return (Connection) super.getSource();
     }
 }

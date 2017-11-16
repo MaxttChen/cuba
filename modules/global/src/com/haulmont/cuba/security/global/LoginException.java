@@ -36,6 +36,10 @@ public class LoginException extends Exception {
         super(t);
     }
 
+    protected LoginException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
     public LoginException(String template, Object... params) {
         super(String.format(template, params));
     }

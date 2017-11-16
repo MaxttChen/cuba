@@ -23,6 +23,8 @@ import com.haulmont.cuba.core.global.Events;
 import com.haulmont.cuba.core.global.GlobalConfig;
 import com.haulmont.cuba.core.global.Messages;
 import com.haulmont.cuba.core.sys.AppContext;
+import com.haulmont.cuba.core.sys.SecurityContext;
+import com.haulmont.cuba.gui.executors.BackgroundWorker;
 import com.haulmont.cuba.security.app.UserSessionService;
 import com.haulmont.cuba.security.auth.AbstractClientCredentials;
 import com.haulmont.cuba.security.auth.AuthenticationDetails;
@@ -30,8 +32,13 @@ import com.haulmont.cuba.security.auth.AuthenticationService;
 import com.haulmont.cuba.security.auth.Credentials;
 import com.haulmont.cuba.security.entity.User;
 import com.haulmont.cuba.security.global.*;
+import com.haulmont.cuba.web.App;
 import com.haulmont.cuba.web.Connection;
+import com.haulmont.cuba.web.security.events.*;
+import com.vaadin.server.VaadinService;
 import com.vaadin.server.VaadinSession;
+import com.vaadin.server.WebBrowser;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.BeanDefinition;
@@ -40,7 +47,9 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
+import java.lang.reflect.UndeclaredThrowableException;
 import java.util.List;
+import java.util.TimeZone;
 
 /**
  * Default {@link Connection} implementation for web-client.
@@ -50,8 +59,6 @@ import java.util.List;
 public class ConnectionImpl extends EventRouter implements Connection {
 
     private static final Logger log = LoggerFactory.getLogger(ConnectionImpl.class);
-
-    protected boolean connected;
 
     @Inject
     private AuthenticationService authenticationService;
@@ -65,23 +72,78 @@ public class ConnectionImpl extends EventRouter implements Connection {
     @Inject
     protected Messages messages;
     @Inject
+    protected BackgroundWorker backgroundWorker;
+    @Inject
     protected GlobalConfig globalConfig;
-
-    protected ClientUserSession session;
 
     @Override
     public void login(Credentials credentials) throws LoginException {
+        backgroundWorker.checkUIAccess();
+
         preprocessCredentials(credentials);
 
         AuthenticationDetails authenticationDetails = loginInternal(credentials);
 
-        // todo
+        ClientUserSession clientUserSession = createSession(authenticationDetails.getSession());
+        if (credentials instanceof AnonymousUserCredentials) {
+            clientUserSession.setAuthenticated(false);
+        } else {
+            clientUserSession.setAuthenticated(true);
+        }
+
+        setSessionInternal(clientUserSession);
+
+        publishUserConnectedEvent();
+
+        fireStateChangeListeners();
+    }
+
+    protected ClientUserSession createSession(UserSession userSession) {
+        return new ClientUserSession(userSession);
     }
 
     protected void preprocessCredentials(Credentials credentials) {
         if (credentials instanceof AbstractClientCredentials) {
-            ((AbstractClientCredentials) credentials).setClientType(ClientType.WEB);
+            AbstractClientCredentials clientCredentials = (AbstractClientCredentials) credentials;
+            clientCredentials.setClientType(ClientType.WEB);
+            clientCredentials.setClientInfo(makeClientInfo());
+            clientCredentials.setTimeZone(detectTimeZone());
+            clientCredentials.setIpAddress(App.getInstance().getClientAddress());
+            if (!globalConfig.getLocaleSelectVisible()) {
+                clientCredentials.setOverrideLocale(false);
+            }
         }
+    }
+
+    protected String makeClientInfo() {
+        // timezone info is passed only on VaadinSession creation
+        WebBrowser webBrowser = VaadinSession.getCurrent().getBrowser();
+        // todo fix, current request is unavailable in background threads
+        webBrowser.updateRequestDetails(VaadinService.getCurrentRequest());
+
+        //noinspection UnnecessaryLocalVariable
+        String serverInfo = String.format("Web (%s:%s/%s) %s",
+                globalConfig.getWebHostName(),
+                globalConfig.getWebPort(),
+                globalConfig.getWebContextName(),
+                webBrowser.getBrowserApplication());
+
+        return serverInfo;
+    }
+
+    protected TimeZone detectTimeZone() {
+        // timezone info is passed only on VaadinSession creation
+        WebBrowser webBrowser = VaadinSession.getCurrent().getBrowser();
+        webBrowser.updateRequestDetails(VaadinService.getCurrentRequest());
+
+        int offset = webBrowser.getTimezoneOffset() / 1000 / 60;
+        char sign = offset >= 0 ? '+' : '-';
+        int absOffset = Math.abs(offset);
+
+        String hours = StringUtils.leftPad(String.valueOf(absOffset / 60), 2, '0');
+        String minutes = StringUtils.leftPad(String.valueOf(absOffset % 60), 2, '0');
+
+        return TimeZone.getTimeZone("GMT" + sign + hours + minutes);
     }
 
     protected AuthenticationDetails loginInternal(Credentials credentials) throws LoginException {
@@ -105,7 +167,7 @@ public class ConnectionImpl extends EventRouter implements Connection {
                         log.debug("Login successful for {}", credentials);
 
                         // publish login success
-                        publishLoginSuccess(details, credentials);
+                        publishUserSessionStartedEvent(credentials, details);
 
                         return details;
                     }
@@ -116,7 +178,7 @@ public class ConnectionImpl extends EventRouter implements Connection {
                     throw e;
                 } catch (RuntimeException re) {
                     InternalAuthenticationException ie =
-                            new InternalAuthenticationException("Exception is thrown by authentication provider", re);
+                            new InternalAuthenticationException("Exception is thrown by login provider", re);
 
                     // publish auth fail
                     publishLoginFailed(credentials, provider, ie);
@@ -133,24 +195,73 @@ public class ConnectionImpl extends EventRouter implements Connection {
                         + credentialsClass.getName());
     }
 
-    protected void publishBeforeLoginEvent(Credentials credentials) {
-        // todo
+    protected void fireStateChangeListeners() {
+        StateChangeEvent event = new StateChangeEvent(this);
+        fireEvent(StateChangeListener.class, StateChangeListener::connectionStateChanged, event);
     }
 
-    protected void publishAfterLoginEvent(Credentials credentials, AuthenticationDetails details) {
-        // todo
+    protected void fireSubstitutionListeners() {
+        UserSubstitutedEvent event = new UserSubstitutedEvent(this);
+        fireEvent(UserSubstitutionListener.class, UserSubstitutionListener::userSubstituted, event);
     }
 
-    protected void publishLoginFailed(Credentials credentials, LoginProvider provider, LoginException e) {
-        // todo
+    protected void publishUserConnectedEvent() {
+        events.publish(new UserConnectedEvent(this));
     }
 
-    protected void publishLoginSuccess(AuthenticationDetails details, Credentials credentials) {
-        // todo
+    protected void publishBeforeLoginEvent(Credentials credentials) throws LoginException {
+        try {
+            events.publish(new BeforeLoginEvent(credentials));
+        } catch (UndeclaredThrowableException e) {
+            rethrowLoginException(e);
+        }
+    }
+
+    protected void publishAfterLoginEvent(Credentials credentials, AuthenticationDetails authenticationDetails) {
+        events.publish(new AfterLoginEvent(credentials, authenticationDetails));
+    }
+
+    protected void publishLoginFailed(Credentials credentials, LoginProvider provider, LoginException e)
+            throws LoginException {
+        try {
+            events.publish(new LoginFailureEvent(credentials, provider, e));
+        } catch (UndeclaredThrowableException re) {
+            rethrowLoginException(re);
+        }
+    }
+
+    protected void publishUserSessionStartedEvent(Credentials credentials, AuthenticationDetails authenticationDetails) {
+        events.publish(new UserSessionStartedEvent(credentials, authenticationDetails));
+    }
+
+    protected void rethrowLoginException(RuntimeException e) throws LoginException {
+        Throwable cause = e.getCause();
+        if (cause instanceof LoginException) {
+            throw (LoginException) cause;
+        } else {
+            throw e;
+        }
+    }
+
+    protected ClientUserSession getSessionInternal() {
+        return (ClientUserSession) VaadinSession.getCurrent().getAttribute(UserSession.class);
+    }
+
+    protected void setSessionInternal(ClientUserSession userSession) {
+        VaadinSession.getCurrent().setAttribute(UserSession.class, userSession);
+        if (userSession != null) {
+            AppContext.setSecurityContext(new SecurityContext(userSession));
+        } else {
+            AppContext.setSecurityContext(null);
+        }
     }
 
     @Override
     public void logout() {
+        backgroundWorker.checkUIAccess();
+
+        ClientUserSession session = getSessionInternal();
+
         if (session == null) {
             throw new IllegalStateException("There is no active session");
         }
@@ -158,45 +269,61 @@ public class ConnectionImpl extends EventRouter implements Connection {
             throw new IllegalStateException("Active session is not authenticated");
         }
 
-        authenticationService.logout();
+        if (session.isAuthenticated()) {
+            authenticationService.logout();
+        }
 
-        AppContext.setSecurityContext(null);
+        publishUserSessionFinishedEvent(session);
 
-        StateChangeEvent event = new StateChangeEvent(this);
-        fireEvent(StateChangeListener.class, StateChangeListener::connectionStateChanged, event);
+        setSessionInternal(null);
 
         removeListeners(UserSubstitutionListener.class);
+
+        publishDisconnectedEvent();
+
+        fireStateChangeListeners();
+    }
+
+    private void publishUserSessionFinishedEvent(ClientUserSession session) {
+        UserSessionFinishedEvent event = new UserSessionFinishedEvent(session);
+        events.publish(event);
+    }
+
+    protected void publishDisconnectedEvent() {
+        events.publish(new UserDisconnectedEvent(this));
     }
 
     @Override
     @Nullable
     public UserSession getSession() {
-        return VaadinSession.getCurrent().getAttribute(UserSession.class);
+        return getSessionInternal();
     }
 
     @Override
     public void substituteUser(User substitutedUser) {
-        // todo
+        UserSession session = authenticationService.substituteUser(substitutedUser);
+
+        ClientUserSession clientUserSession = createSession(session);
+        clientUserSession.setAuthenticated(true);
+
+        setSessionInternal(clientUserSession);
+
+        fireSubstitutionListeners();
     }
 
     @Override
     public boolean isConnected() {
-        return connected;
+        return getSessionInternal() != null;
     }
 
     @Override
     public boolean isAuthenticated() {
-        if (!connected) {
-            return false;
-        }
-
-        UserSession session = getSession();
-        return session instanceof ClientUserSession
-                && ((ClientUserSession) session).isAuthenticated();
+        ClientUserSession session = getSessionInternal();
+        return session != null && session.isAuthenticated();
     }
 
-    protected void setSession(ClientUserSession clientUserSession) {
-        VaadinSession.getCurrent().setAttribute(UserSession.class, clientUserSession);
+    protected List<LoginProvider> getProviders() {
+        return loginProviders;
     }
 
     @Override
@@ -237,14 +364,5 @@ public class ConnectionImpl extends EventRouter implements Connection {
     @Override
     public void removeUserSubstitutionListener(UserSubstitutionListener listener) {
         removeListener(UserSubstitutionListener.class, listener);
-    }
-
-    protected List<LoginProvider> getProviders() {
-        return loginProviders;
-    }
-
-    @Override
-    public String logoutExternalAuthentication() {
-        return null; // todo
     }
 }

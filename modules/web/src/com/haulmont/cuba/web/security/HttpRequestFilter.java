@@ -14,21 +14,10 @@
  * limitations under the License.
  */
 
-package com.haulmont.cuba.security.global;
-
-import com.haulmont.cuba.core.global.SupportedByClient;
+package com.haulmont.cuba.web.security;
 
 /**
- * Exception that is thrown when underlying authentication mechanisms cannot process an authentication request.
+ * Marker interface for beans that will be wired by {@link com.haulmont.cuba.web.sys.CubaHttpFilter} automatically.
  */
-@SupportedByClient
-public class InternalAuthenticationException extends LoginException {
-
-    public InternalAuthenticationException(String message) {
-        super(message);
-    }
-
-    public InternalAuthenticationException(String message, Throwable t) {
-        super(message, t);
-    }
+public interface HttpRequestFilter extends javax.servlet.Filter {
 }

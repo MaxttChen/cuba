@@ -20,6 +20,7 @@ import com.haulmont.cuba.security.auth.AuthenticationDetails;
 import com.haulmont.cuba.security.auth.Credentials;
 import com.haulmont.cuba.security.auth.SimpleAuthenticationDetails;
 import com.haulmont.cuba.security.global.LoginException;
+import com.haulmont.cuba.security.global.UserSession;
 import com.haulmont.cuba.web.security.AnonymousUserCredentials;
 import com.haulmont.cuba.web.security.LoginProvider;
 import com.haulmont.cuba.web.security.WebAnonymousSessionHolder;
@@ -27,6 +28,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
+import java.util.Locale;
 
 @Component("cuba_AnonymousLoginProvider")
 public class AnonymousLoginProvider implements LoginProvider {
@@ -40,7 +42,13 @@ public class AnonymousLoginProvider implements LoginProvider {
             throw new ClassCastException("Credentials cannot be cast to AnonymousUserCredentials");
         }
 
-        return new SimpleAuthenticationDetails(anonymousSessionHolder.getAnonymousSession());
+        UserSession anonymousSession = anonymousSessionHolder.getAnonymousSession();
+        Locale credentialsLocale = ((AnonymousUserCredentials) credentials).getLocale();
+        if (credentialsLocale != null) {
+            anonymousSession.setLocale(credentialsLocale);
+        }
+
+        return new SimpleAuthenticationDetails(anonymousSession);
     }
 
     @Override

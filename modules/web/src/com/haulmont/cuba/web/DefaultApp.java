@@ -17,17 +17,13 @@
 package com.haulmont.cuba.web;
 
 import com.google.common.base.Strings;
-import com.haulmont.bali.util.ParamsMap;
-import com.haulmont.cuba.core.global.UserSessionSource;
-import com.haulmont.cuba.gui.WindowManager.OpenType;
-import com.haulmont.cuba.gui.components.Window;
-import com.haulmont.cuba.gui.config.WindowInfo;
-import com.haulmont.cuba.security.entity.User;
 import com.haulmont.cuba.security.global.LoginException;
 import com.haulmont.cuba.security.global.UserSession;
 import com.haulmont.cuba.web.app.loginwindow.AppLoginWindow;
-import com.haulmont.cuba.web.auth.ExternallyAuthenticatedConnection;
 import com.haulmont.cuba.web.security.AnonymousUserCredentials;
+import com.haulmont.cuba.web.security.events.AppLoggedInEvent;
+import com.haulmont.cuba.web.security.events.AppLoggedOutEvent;
+import com.haulmont.cuba.web.security.events.AppStartedEvent;
 import com.vaadin.server.*;
 import com.vaadin.ui.UI;
 import org.slf4j.Logger;
@@ -36,12 +32,12 @@ import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.Locale;
 
 import static com.haulmont.cuba.web.Connection.*;
+import static com.haulmont.cuba.web.security.ExternalUserCredentials.isLoggedInWithExternalAuth;
 
 /**
  * Default {@link App} implementation that shows {@link AppLoginWindow} on start.
@@ -52,12 +48,6 @@ import static com.haulmont.cuba.web.Connection.*;
 public class DefaultApp extends App implements StateChangeListener, UserSubstitutionListener {
 
     private static final Logger log = LoggerFactory.getLogger(DefaultApp.class);
-
-    // Login on start only on first request from user
-    protected boolean tryLoginOnStart = true;
-
-    @Inject
-    protected UserSessionSource userSessionSource;
 
     public DefaultApp() {
     }
@@ -87,35 +77,11 @@ public class DefaultApp extends App implements StateChangeListener, UserSubstitu
             // substitution listeners are cleared by connection on logout
             connection.addUserSubstitutionListener(this);
 
-            if (connection.isAuthenticated()
-                    && !webAuthConfig.getExternalAuthentication()
-                    && webConfig.getUseSessionFixationProtection()) {
-                VaadinService.reinitializeSession(VaadinService.getCurrentRequest());
-
-                WrappedSession session = VaadinSession.getCurrent().getSession();
-                int timeout = webConfig.getHttpSessionExpirationTimeoutSec();
-                session.setMaxInactiveInterval(timeout);
-
-                HttpSession httpSession = session instanceof WrappedHttpSession ?
-                        ((WrappedHttpSession) session).getHttpSession() : null;
-                log.debug("Session reinitialized: HttpSession={}, timeout={}sec, UserSession={}",
-                        httpSession, timeout, connection.getSession());
-            }
+            preventSessionFixation(connection, userSession);
 
             initExceptionHandlers(true);
 
-            AppUI currentUi = AppUI.getCurrent();
-            if (currentUi != null) {
-                createTopLevelWindow(currentUi);
-            }
-
-            for (AppUI ui : getAppUIs()) {
-                if (currentUi != ui) {
-                    ui.accessSynchronously(() ->
-                            createTopLevelWindow(ui)
-                    );
-                }
-            }
+            initializeUi();
 
             if (linkHandler != null && linkHandler.canHandleLink()) {
                 linkHandler.handle();
@@ -123,53 +89,98 @@ public class DefaultApp extends App implements StateChangeListener, UserSubstitu
             }
 
             afterLoggedIn();
+
+            publishAppLoggedInEvent();
         } else {
-            boolean redirectedToExternalAuth = false;
+            initExceptionHandlers(false);
 
-            if (webAuthConfig.getExternalAuthentication()) {
-                String loggedOutUrl = connection.logoutExternalAuthentication();
-                if (!Strings.isNullOrEmpty(loggedOutUrl)) {
-                    AppUI currentUi = AppUI.getCurrent();
-                    // it can be null if we handle request in a custom RequestHandler
-                    if (currentUi != null) {
-                        currentUi.setContent(null);
-                        currentUi.getPage().setLocation(loggedOutUrl);
-                    } else {
-                        VaadinResponse response = VaadinService.getCurrentResponse();
-                        try {
-                            ((VaadinServletResponse) response).getHttpServletResponse().
-                                    sendRedirect(loggedOutUrl);
-                        } catch (IOException e) {
-                            log.error("Error on send redirect to client", e);
-                        }
-                    }
+            // todo current request can be null !
+            Locale requestLocale = VaadinService.getCurrentRequest().getLocale();
+            setLocale(resolveLocale(requestLocale));
 
-                    VaadinSession vaadinSession = VaadinSession.getCurrent();
-                    for (UI ui : vaadinSession.getUIs()) {
-                        if (ui != currentUi) {
-                            ui.access(() -> {
-                                ui.setContent(null);
-                                ui.getPage().setLocation(loggedOutUrl);
-                            });
-                        }
-                    }
-
-                    redirectedToExternalAuth = true;
-                }
+            try {
+                connection.login(new AnonymousUserCredentials(getLocale()));
+            } catch (LoginException e) {
+                throw new RuntimeException("Unable to login as anonymous!");
             }
 
-            if (!redirectedToExternalAuth) {
-                initExceptionHandlers(false);
+            publishAppLoggedOutEvent();
+        }
+    }
 
-                Locale requestLocale = VaadinService.getCurrentRequest().getLocale();
-                setLocale(resolveLocale(requestLocale));
+    protected void publishAppLoggedOutEvent() {
+        AppLoggedOutEvent event = new AppLoggedOutEvent(this);
+        events.publish(event);
 
+        String loggedOutUrl = event.getRedirectUrl();
+        if (loggedOutUrl != null) {
+            redirectAfterLogout(loggedOutUrl);
+        }
+    }
+
+    protected void redirectAfterLogout(String loggedOutUrl) {
+        if (!Strings.isNullOrEmpty(loggedOutUrl)) {
+            AppUI currentUi = AppUI.getCurrent();
+            // it can be null if we handle request in a custom RequestHandler
+            if (currentUi != null) {
+                currentUi.setContent(null);
+                currentUi.getPage().setLocation(loggedOutUrl);
+            } else {
+                VaadinResponse response = VaadinService.getCurrentResponse();
                 try {
-                    connection.login(new AnonymousUserCredentials(getLocale()));
-                } catch (LoginException e) {
-                    throw new RuntimeException("Unable to login as anonymous!");
+                    ((VaadinServletResponse) response).getHttpServletResponse().
+                            sendRedirect(loggedOutUrl);
+                } catch (IOException e) {
+                    log.error("Error on send redirect to client", e);
                 }
             }
+
+            VaadinSession vaadinSession = VaadinSession.getCurrent();
+            for (UI ui : vaadinSession.getUIs()) {
+                if (ui != currentUi) {
+                    ui.access(() -> {
+                        ui.setContent(null);
+                        ui.getPage().setLocation(loggedOutUrl);
+                    });
+                }
+            }
+        }
+    }
+
+    protected void publishAppLoggedInEvent() {
+        AppLoggedInEvent event = new AppLoggedInEvent(this);
+        events.publish(event);
+    }
+
+    protected void initializeUi() {
+        AppUI currentUi = AppUI.getCurrent();
+        if (currentUi != null) {
+            createTopLevelWindow(currentUi);
+        }
+
+        for (AppUI ui : getAppUIs()) {
+            if (currentUi != ui) {
+                ui.accessSynchronously(() ->
+                        createTopLevelWindow(ui)
+                );
+            }
+        }
+    }
+
+    protected void preventSessionFixation(Connection connection, UserSession userSession) {
+        if (connection.isAuthenticated()
+                && !isLoggedInWithExternalAuth(userSession)
+                && webConfig.getUseSessionFixationProtection()) {
+            VaadinService.reinitializeSession(VaadinService.getCurrentRequest());
+
+            WrappedSession session = VaadinSession.getCurrent().getSession();
+            int timeout = webConfig.getHttpSessionExpirationTimeoutSec();
+            session.setMaxInactiveInterval(timeout);
+
+            HttpSession httpSession = session instanceof WrappedHttpSession ?
+                    ((WrappedHttpSession) session).getHttpSession() : null;
+            log.debug("Session reinitialized: HttpSession={}, timeout={}sec, UserSession={}",
+                    httpSession, timeout, connection.getSession());
         }
     }
 
@@ -183,76 +194,49 @@ public class DefaultApp extends App implements StateChangeListener, UserSubstitu
     }
 
     /**
-     * Perform actions after successful login
+     * Perform actions after successful login.
+     *
+     * @deprecated Use {@link AppLoggedInEvent} instead.
      */
+    @Deprecated
     protected void afterLoggedIn() {
-        if (connection.isAuthenticated() && !webAuthConfig.getExternalAuthentication()) {
-            User user = userSessionSource.getUserSession().getUser();
-            // Change password on logon
-            if (Boolean.TRUE.equals(user.getChangePasswordAtNextLogon())) {
-                WebWindowManager wm = getWindowManager();
-                for (Window window : wm.getOpenWindows()) {
-                    window.setEnabled(false);
-                }
-
-                WindowInfo changePasswordDialog = windowConfig.getWindowInfo("sec$User.changePassword");
-
-                Window changePasswordWindow = wm.openWindow(changePasswordDialog,
-                        OpenType.DIALOG.closeable(false),
-                        ParamsMap.of("cancelEnabled", Boolean.FALSE));
-
-                changePasswordWindow.addCloseListener(actionId -> {
-                    for (Window window : wm.getOpenWindows()) {
-                        window.setEnabled(true);
-                    }
-                });
-            }
-        }
     }
 
     @Override
-    public boolean loginOnStart() {
-        if (tryLoginOnStart
-                && principal != null
-                && webAuthConfig.getExternalAuthentication()) {
+    public boolean loginOnStart() throws LoginException {
+        publishAppStartedEvent();
 
-            String userName = principal.getName();
-            log.debug("Trying to login after external authentication as {}", userName);
+        if (!connection.isConnected()) {
             try {
-                connection.loginAfterExternalAuthentication(userName, getLocale());
-
-                return true;
+                connection.login(new AnonymousUserCredentials(getLocale()));
             } catch (LoginException e) {
-                log.trace("Unable to login on start", e);
-            } finally {
-                // Close attempt login on start
-                tryLoginOnStart = false;
+                throw new RuntimeException("Unable to login as anonymous!");
             }
         }
 
         return false;
     }
 
-    @Override
-    public void userSubstituted(UserSubstitutedEvent event) {
-        Connection connection = event.getSource();
+    protected void publishAppStartedEvent() {
+        AppStartedEvent event = new AppStartedEvent(this);
+        events.publish(event);
+    }
 
+    @Override
+    public void navigateTo(String topLevelWindowId) {
         cleanupBackgroundTasks();
         clearSettingsCache();
         closeAllWindows();
 
-        AppUI currentUi = AppUI.getCurrent();
-        // it can be null if we came from a custom Vaadin RequestHandler
-        if (currentUi != null) {
-            createTopLevelWindow(currentUi);
-        }
+        super.navigateTo(topLevelWindowId);
+    }
 
-        for (AppUI ui : getAppUIs()) {
-            if (currentUi != ui) {
-                ui.accessSynchronously(() ->
-                        createTopLevelWindow(ui)
-                );
-            }
-        }
+    @Override
+    public void userSubstituted(UserSubstitutedEvent event) {
+        cleanupBackgroundTasks();
+        clearSettingsCache();
+        closeAllWindows();
+
+        initializeUi();
     }
 }

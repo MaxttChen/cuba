@@ -16,11 +16,20 @@
 
 package com.haulmont.cuba.web.security.events;
 
+import com.haulmont.cuba.security.auth.Credentials;
 import org.springframework.context.ApplicationEvent;
 
 public class BeforeLoginEvent extends ApplicationEvent {
-    // todo
-    public BeforeLoginEvent(Object source) {
+    public BeforeLoginEvent(Credentials source) {
         super(source);
+    }
+
+    @Override
+    public Credentials getSource() {
+        return (Credentials) super.getSource();
+    }
+
+    public Credentials getCredentials() {
+        return (Credentials) super.getSource();
     }
 }
